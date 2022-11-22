@@ -1,0 +1,13 @@
+{% extends 'checkout/email/email_base.html' %}
+{% block content %}
+
+    Thank you for your order!
+
+    {% if order.payment_method == order.PAY_IN_STORE %}
+        You have selected to pay in-store. Please send the total order balance through paypal or make arrangements to
+        pay
+        in-cash.
+        shop@comicsgamesandthings.com
+    {% endif %}
+
+{% endblock %}

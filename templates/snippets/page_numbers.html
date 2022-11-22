@@ -1,0 +1,91 @@
+{% load templatehelpers %}
+
+<div class="bg-white px-4 py-3 flex flex-col {% if form.page_size %}lg:flex-row lg:rounded-b-md{% else %}sm:flex-row lg:rounded-t-md{% endif %} gap-2 items-center justify-between sm:border-t-2 sm:border-neutral_back sm:px-6 rounded-md lg:rounded-none mb-4 lg:mb-0">
+    <div class="flex flex-row gap-7 items-center flex-shrink-0">
+        <p class="text-sm text-gray-700 m-0">
+            Showing
+            <span class="font-medium">{{ page.start_index }}</span>
+            to
+            <span class="font-medium">{{ page.end_index }}</span>
+            of
+            <span class="font-medium">{{ num_total }}</span>
+            results
+        </p>
+        {% if form.page_size %}
+            <div class="flex flex-row items-center gap-1 text-gray-500 hover:text-gray-800">
+                {% list_append manual_form_fields "page_size" as manual_form_fields %}
+                <select id="{{form.page_size.auto_id}}" name="{{form.page_size.html_name}}"
+                        onchange="this.form.submit()"
+                        value="{{ form.page_size|field_value_or_default }}"
+                        class="block w-full pl-1 pr-6 py-1 border-gray-300 focus:outline-none text-xs text-current focus:ring-indigo-500 focus:border-indigo-500 rounded-md">
+                    {% to_list 5 10 20 50 as page_size_options %}
+                    {% for size in page_size_options %}
+                        <option value="{{size}}" {% if size|as_str == form.page_size|field_value_or_default|as_str %}selected="selected"{% endif %}>{{size}}</option>
+                    {% endfor %}
+                </select>
+                <span class="flex-grow text-xs whitespace-nowrap">items per page</span>
+            </div>
+        {% endif %}
+    </div>
+    <div class="flex flex-row gap-7 items-center">
+        {% if page.has_other_pages %}
+            <nav class="relative z-0 inline-flex rounded-md shadow-sm -space-x-px" aria-label="Pagination">
+                <a class="relative inline-flex items-center px-2 py-2 rounded-l-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50" href="{% if 1 == page_number %}#{% else %}{% relative_url page.previous_page_number 'page_number' %}{% endif %}">
+                    <span class="sr-only">Previous</span>
+                    <!-- Heroicon name: solid/chevron-left -->
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                        <path fill-rule="evenodd" d="M12.707 5.293a1 1 0 010 1.414L9.414 10l3.293 3.293a1 1 0 01-1.414 1.414l-4-4a1 1 0 010-1.414l4-4a1 1 0 011.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+                {% with page|page_range:page_number as page_range %}
+                    {% if 1 == page_number %}
+                        <a href="{% relative_url 1 'page_number' %}" aria-current="page" class="z-10 bg-indigo-50 border-indigo-500 text-indigo-600 relative inline-flex items-center px-3 py-2 border text-sm font-medium">
+                            1
+                        </a>
+                    {% else %}
+                        <a href="{% relative_url 1 'page_number' %}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-3 py-2 border text-sm font-medium">
+                            1
+                        </a>
+                    {% endif %}
+                    {% if page_range|first > 2 %}
+                        <span class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            ...
+                        </span>
+                    {% endif %}
+                    {% for i in page_range %}
+                        {% if i == page_number %}
+                            <a href="{% relative_url i 'page_number' %}" aria-current="page" class="z-10 bg-indigo-50 border-indigo-500 text-indigo-600 relative inline-flex items-center px-3 py-2 border text-sm font-medium {% if i|page_adjacent:page_number %}{% elif i|page_nearby:page_number %}hidden md:block{% else %}hidden lg:block{% endif %}">
+                                {{ i }}
+                            </a>
+                        {% else %}
+                            <a href="{% relative_url i 'page_number' %}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-3 py-2 border text-sm font-medium {% if i|page_adjacent:page_number %}{% elif i|page_nearby:page_number %}hidden md:block{% else %}hidden lg:block{% endif %}">
+                                {{ i }}
+                            </a>
+                        {% endif %}
+                    {% endfor %}
+                    {% if page_range|last < page.paginator.num_pages|add:-1 %}
+                        <span class="relative inline-flex items-center px-3 py-2 border border-gray-300 bg-white text-sm font-medium text-gray-700">
+                            ...
+                        </span>
+                    {% endif %}
+                    {% if page.paginator.num_pages == page_number %}
+                        <a href="{% relative_url page.paginator.num_pages 'page_number' %}" aria-current="page" class="z-10 bg-indigo-50 border-indigo-500 text-indigo-600 relative inline-flex items-center px-3 py-2 border text-sm font-medium">
+                            {{ page.paginator.num_pages }}
+                        </a>
+                    {% else %}
+                        <a href="{% relative_url page.paginator.num_pages 'page_number' %}" class="bg-white border-gray-300 text-gray-500 hover:bg-gray-50 relative inline-flex items-center px-3 py-2 border text-sm font-medium">
+                            {{ page.paginator.num_pages }}
+                        </a>
+                    {% endif %}
+                {% endwith %}
+                <a href="{% if page.paginator.num_pages == page_number %}#{% else %}{% relative_url page.next_page_number 'page_number' %}{% endif %}" class="relative inline-flex items-center px-2 py-2 rounded-r-md border border-gray-300 bg-white text-sm font-medium text-gray-500 hover:bg-gray-50">
+                    <span class="sr-only">Next</span>
+                    <!-- Heroicon name: solid/chevron-right -->
+                    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd" />
+                    </svg>
+                </a>
+            </nav>
+        {% endif %}
+    </div>
+</div>

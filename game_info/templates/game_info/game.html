@@ -1,0 +1,33 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ game.name }}{% endblock %}
+{% block extrastyle %}
+{% endblock %}
+{% block content %}
+    <h2>{{ game.name }}</h2>
+    {% if game.description %}
+        <p>{{ game.description }}</p>
+    {% endif %}
+    <h3> Featured Products</h3>
+    {% include 'snippets/product_small_cards.html' %}
+    <h3>Factions</h3>
+    <ul>
+        {% if game.root_factions %}
+            {% for faction in game.root_factions|dictsort:"name" %}
+                <li>
+                    {% include 'game_info/snippets/faction_with_subfactions.html' %}
+                </li>
+            {% endfor %}
+        {% endif %}
+    </ul>
+    {% if game.attribute_types %}
+        {% for type, attributes in game.get_sorted_attributes.items %}
+            <h3>{{ type.name }}</h3>
+
+            {% include 'game_info/snippets/attribute_list.html' %}
+        {% endfor %}
+    {% endif %}
+    <h3> All Products</h3>
+    {% include 'snippets/product_small_cards.html' with featured_items=items.all %}
+{% endblock %}

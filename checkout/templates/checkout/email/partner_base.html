@@ -1,0 +1,62 @@
+{% load static %}
+{% block content %}
+
+{% endblock %}
+<div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Username</th>
+            <th scope="col">Email</th>
+            <th scope="col">Order ID</th>
+        </tr>
+        </thead>
+        <tr>
+            <td>
+                {% if order.owner %}
+                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=order.owner.id %}">
+                        {{ order.owner.username }}
+                    </a>
+                {% endif %}
+            </td>
+            <td>
+                {% if order.owner %}
+                    {{ order.owner.email }}
+                {% else %}
+                    {{ order.email }}
+                {% endif %}
+            </td>
+            <td>
+                <a href="{% site_url cart %}{% url 'partner_order_details' partner_slug=partner.slug cart_id=order.id %}">
+                    {{ order.id }}
+                </a>
+            </td>
+        </tr>
+    </table>
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Items</th>
+            <th scope="col">Location</th>
+            <th scope="col">Status</th>
+        </tr>
+        </thead>
+        <tr>
+            <td>
+                {{ order.date_submitted }}
+            </td>
+            <td>{{ order.num_items }}</td>
+            <td>
+                {% if order.at_pos %}
+                    {{ order.payment_partner }}
+                {% else %}
+                    Online
+                {% endif %}
+            </td>
+            <td>{{ order.status }}</td>
+        </tr>
+    </table>
+    {% include 'checkout/snippets/cart_address_info.html' with cart=order %}
+    {% include 'checkout/snippets/static_cart_summary.html' with cart=order %}
+</div>

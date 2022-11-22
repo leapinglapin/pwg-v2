@@ -1,0 +1,30 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    {% include "checkout/snippets/checkout_process_bar.html" %}
+    {% include "checkout/snippets/small_cart_summary.html" %}
+
+    <div>
+        <h2>Would you like to pick your order up from one of our partners?</h2>
+        In-store pickup is free. US shipping incurs a flat $4 charge.
+        We do not ship internationally.
+        <form action="." method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="fieldWrapper">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                    {% if field.help_text %}
+                        <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Next</button>
+        </form>
+    </div>
+{% endblock %}

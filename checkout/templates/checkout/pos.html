@@ -1,0 +1,42 @@
+{% extends 'container.html' %}
+{% load mathfilters %}
+{% load static %}
+{% load react %}
+
+{% block title %}POS{% endblock %}
+{% block extrastyle %}
+    <script src="https://js.stripe.com/terminal/v1/"></script>
+    <script src="{% static "js/onscan.min.js" %}"></script>
+
+
+{% endblock %}
+{% block content %}
+    <div class="row">
+
+        {% react_render component="POS" props=props identifier="pos" %}
+            
+        <script>
+            onScan.attachTo(document, {
+                keyCodeMapper: function (oEvent) {
+
+                    // your hyphen-minus code is 45
+                    console.log(oEvent.which)
+                    if (oEvent.which == 189) {
+                        return '-';
+                    }
+                    // Fall back to the default decoder in all other cases
+                    return onScan.decodeKeyEvent(oEvent);
+                },
+                suffixKeyCodes: [13], // enter-key expected at the end of a scan
+                reactToPase: true, // Compatibility to built-in scanners in paste-mode (as opposed to keyboard-mode)
+                avgTimeByChar: 60, //Slowed down for newer scanner
+                onKeyDetect: function (iKeyCode) { // output all potentially relevant key events - great for debugging!
+                    console.log('Pressed: ' + iKeyCode);
+                }
+            });
+
+        </script>
+    </div>
+
+
+{% endblock %}

@@ -1,0 +1,443 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Intake Items{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    <script src="{% static "js/onscan.min.js" %}"></script>
+
+    <br>
+    <form id="refresh_form" method="post">
+        {% csrf_token %}
+        <div class="row">
+            <div class="form-group col-md-3">
+                <select class="form-control" data-live-search="true" name="distributor" id="id_distributor">
+                    {% for dist in dist_list %}
+                        <option {% if dist == distributor %} selected="selected" {% endif %}>{{ dist }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="form-group col-md-5">
+                <input type="text" class="form-control" name="purchase_order" id="id_purchase_order"
+                       placeholder="Purchase Order" value="{{ purchase_order }}">
+            </div>
+            {% if po %}
+                <div>
+                    <p>{{ po.date }}</p>
+                    <p> Total:
+                        {% if po.subtotal %}
+                            {{ po.subtotal }}
+                        {% else %}
+                            {{ po.get_line_total }}
+                        {% endif %}
+                    </p>
+                    <p>
+                        Amount Paid: {{ po.amount_charged }}
+                    </p>
+                </div>
+            {% endif %}
+        </div>
+        <div class="row">
+            <div class="form-group col-md-3">
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-secondary">
+                        <input type="radio" name="add_mode" id="id_view_mode" autocomplete="off" value=false> View
+                        Details
+                    </label>
+                    <label class="btn btn-secondary">
+                        <input type="radio" name="add_mode" id="id_add_mode" autocomplete="off" value=true> Add Item
+                    </label>
+                </div>
+            </div>
+            <div class="form-group col-md-3">
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-secondary">
+                        <input type="radio" name="auto_load" id="id_auto_load" autocomplete="off" value=true> Load on
+                        Scan
+                    </label>
+                    <label class="btn btn-secondary">
+                        <input type="radio" name="auto_load" id="id_no_auto_load" autocomplete="off" value=false> Manual
+                        load
+                    </label>
+                </div>
+            </div>
+            <div class="form-group col-md-4">
+
+                <div class="btn-group btn-group-toggle" data-toggle="buttons">
+                    <label class="btn btn-secondary">
+                        <input type="radio" name="auto_print_mode" id="id_auto_print_mode" autocomplete="off"
+                               value=true> Auto-print label
+                    </label>
+                    <label class="btn btn-secondary">
+                        <input type="radio" name="auto_print_mode" id="id_no_print_mode" autocomplete="off" value=false>
+                        Do not print label
+                    </label>
+                </div>
+            </div>
+            <div class="form-group col-md-6">
+            </div>
+
+        </div>
+
+        <div class="row">
+            <div class="form-group col-md-6">
+                <input type="text" class="form-control" name="barcode" id="id_barcode" placeholder="Barcode">
+            </div>
+            <div class="form-group col-md-2">
+                <input type="number" class="form-control" name="quantity" id="id_quantity" value="1">
+            </div>
+            <div class="form-group col-md-1">
+                <button type="button" class="btn btn-primary" id="loadadd">Load</button>
+            </div>
+            <div class="form-group col-md-1">
+                <button type="button" class="btn btn-warning" id="clear">Clear</button>
+            </div>
+        </div>
+    </form>
+
+    <div class="row">
+        <div class=" {% if square_enabled %}col-md-4 {% else %} col-md-6 {% endif %} ">
+            {% if dist_items %}
+                <h3>Distributor:</h3>
+                {% for dist_item in dist_items %}
+                    <div class="card">
+                        <h4>{{ dist_item.dist_name }}</h4>
+                        {{ dist_item.distributor }}<br>
+                        MSRP: {{ dist_item.msrp }}<br>
+                        MAP: {{ dist_item.map }}
+                    </div>
+                {% endfor %}
+            {% else %}
+                Item not in Supplier Inventory
+            {% endif %}
+        </div>
+
+        <div class=" {% if square_enabled %} col-md-4 {% else %} col-md-6 {% endif %} ">
+            <h3>Local:</h3>
+
+            {% if local_product %}
+                <a href=" {% url  'manage_product' partner_slug=partner.slug product_slug=local_product.slug %}">
+                    {{ local_product.name }}
+                </a>
+
+                <br>
+                {{ local_product.msrp }}
+                <br>
+                {% if local_product.release_date %}
+                    Release date: {{ local_product.release_date }}
+                    <br>
+                {% endif %}
+            {% endif %}
+            {% if local_item %}
+                Price: {{ local_item.price }}
+                <br>
+                {% if not local_item.use_linked_inventory %}
+                    Inventory: {{ local_item.current_inventory }}
+                {% else %}
+                    Pulling inventory information from square
+                {% endif %}
+
+            {% else %}
+                {% if add_mode %}
+                    {% if local_product %}
+                        <br>
+                        Confirm item details and scan again to confirm and add to inventory.
+                        <form action="" method="post"
+                              id="create_item_form">
+                            {% csrf_token %}{% for field in add_item_form %}
+                                <div class="fieldWrapper">
+                                    {{ field.errors }}
+                                    {{ field.label_tag }} {{ field }}
+                                    {% if field.help_text %}
+                                        <p class="help">{{ field.help_text|safe }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary" id="create">Add to inventory</button>
+                        </form>
+                        <br>
+                    {% else %}
+                        <br>
+                        Confirm item details and scan again to confirm and add to inventory.
+                        <form action="" method="post"
+                              id="create_form">
+                            {% csrf_token %}{% for field in add_form %}
+                                <div class="fieldWrapper">
+                                    {{ field.errors }}
+                                    {{ field.label_tag }} {{ field }}
+                                    {% if field.help_text %}
+                                        <p class="help">{{ field.help_text|safe }}</p>
+                                    {% endif %}
+                                </div>
+                            {% endfor %}
+                            <button type="submit" class="btn btn-primary" id="create">Add to inventory</button>
+                        </form>
+                        <br>
+                    {% endif %}
+                {% endif %}
+            {% endif %}
+
+        </div>
+        <div class=" col-md-4 ">
+            {% if square_enabled %}
+                <h3>Square:</h3>
+                {% if square_item %}
+                    <h3>
+                        <span id="name">{{ square_item.name }}</span>
+                    </h3>
+                    In Category: {{ square_item.category_id }}
+                    <br>
+                    Square Price:
+                    <span id="price">{{ square_item.local_item.price }}</span>
+                    <br>
+                    We have {{ count }}
+                    <br>
+
+                {% else %}
+                    Item not in Square Inventory.
+                {% endif %}
+            {% endif %}
+        </div>
+    </div>
+    {% if local_item %}
+        <div class="row">
+            <form action="{% url 'get_image' partner_slug=partner|slugify item_id=local_item.id %} " method="post"
+                  id="print_form">
+                {% csrf_token %}
+                {{ print_form }}
+                <button type="submit" class="btn btn-primary" id="print">Print Label</button>
+                <img id="preview_image"/>
+
+            </form>
+            <script>
+
+                function ImagetoPrint(source) {
+                    return "<html><head><scri" + "pt>function step1(){\n" +
+                        "setTimeout('step2()', 10);}\n" +
+                        "function step2(){window.print();window.close()}\n" +
+                        "</scri" + "pt></head><body onload='step1()'>\n" +
+                        "<img src='" + source + "' /></body></html>";
+                }
+
+                {#  https://stackoverflow.com/questions/2909033/using-javascript-to-print-images #}
+
+                function PrintImage(source) {
+                    var Pagelink = "about:blank";
+                    var pwa = window.open(Pagelink, "_new");
+                    pwa.document.open();
+                    pwa.document.write(ImagetoPrint(source));
+                    pwa.document.close();
+                }
+
+                $('#print_form').submit(function (e) {
+                    e.preventDefault();
+                    console.log("attempting print")
+
+                    let request = new Request(
+                        " {% url 'get_image' partner_slug=partner|slugify item_id=local_item.id %} ",
+                        {headers: {'X-CSRFToken': csrftoken}}
+                    );
+                    fetch(request, {
+                        method: 'POST',
+                        mode: 'same-origin', // Do not send CSRF token to another domain.
+                    }).then(response => response.blob()
+                    ).then(imageBlob => PrintImage(URL.createObjectURL(imageBlob))
+                    );
+                    return false;
+                })
+                ;
+            </script>
+            <img src="{% url 'get_image' partner_slug=partner|slugify item_id=local_item.id %} ">
+        </div>
+    {% endif %}
+    <br>
+    <script>
+        function getCookie(name) {
+            var cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                var cookies = document.cookie.split(';');
+                for (var i = 0; i < cookies.length; i++) {
+                    var cookie = cookies[i].trim();
+                    // Does this cookie string begin with the name we want?
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        var csrftoken = getCookie('csrftoken');
+        {% if add_mode %}
+            $('#id_manufacturer option:contains("{{mfc_guess}}")').prop('selected', true);
+            $('#id_category option:contains("{{cat_guess}}")').prop('selected', true);
+            $('#id_distributor option:contains("{{distributor}}")').prop('selected', true);
+            $('#id_msrp_0').val({{ item.msrp.amount }});
+            let our_price = 0;
+            {% if item.map.amount %}
+                our_price = {{ item.map.amount }}
+            {% endif %}
+            {% if item.msrp.amount %}
+                if (our_price === 0) {
+                    our_price = {{ item.msrp.amount }};
+                }
+            {% endif %}
+            $('#id_map_0').val({{item.map.amount}});
+            $('#id_our_name').val("{{ item.dist_name|escapejs }}");
+            $('#id_our_price_0').val(our_price);
+            $('#id_dist_price_0').val({{item.dist_price.amount}});
+
+            function SubForm() {
+                $("#create").click()
+            }
+            {% if local_product %}
+                $('#create_item_form').submit(function (e) {
+                    e.preventDefault();
+                    form = document.getElementById("create_item_form");
+                    if (form.checkValidity()) {
+                        let request = new Request(
+                            '{% url 'add_inventory_item' partner_slug=partner.slug product_slug=local_product.slug %}',
+                            {headers: {'X-CSRFToken': csrftoken}}
+                        );
+                        fetch(request, {
+                            method: 'POST',
+                            mode: 'same-origin', // Do not send CSRF token to another domain.
+                            body: new FormData(form)
+                        }).then(function (response) {
+                            console.log("Success");
+                            loadpage($('#id_barcode')[0].value);
+                        });
+
+                    }
+                    return false;
+                });
+            {% else %}
+
+                $('#create_form').submit(function (e) {
+                    e.preventDefault();
+                    form = document.getElementById("create_form");
+                    if (form.checkValidity()) {
+                        let request = new Request(
+                            '{% url 'intake_create' partner_slug=partner|slugify barcode="REPLACE_ME" %}'.replace("REPLACE_ME", $('#id_barcode')[0].value),
+                            {headers: {'X-CSRFToken': csrftoken}}
+                        );
+                        fetch(request, {
+                            method: 'POST',
+                            mode: 'same-origin', // Do not send CSRF token to another domain.
+                            body: new FormData(form)
+                        }).then(function (response) {
+                            console.log("Success");
+                            loadpage($('#id_barcode')[0].value);
+                        });
+
+                    }
+                    return false;
+                });
+            {% endif %}
+        {% endif %}
+
+
+
+        var barcode = window.location.pathname.split('/').pop();
+        console.log(barcode);
+        if (barcode) {
+            $('#id_barcode')[0].value = barcode;
+        }
+
+        function loadpage(sCode) {
+            var base = '{% url 'intake_home' partner_slug=partner|slugify%}';
+            var url = base + sCode;
+            var form = $('#refresh_form');
+            form[0].action = url;
+            form[0].submit();
+
+        }
+
+        onScan.attachTo(document, {
+            keyCodeMapper: function (oEvent) {
+
+                // your hyphen-minus code is 45
+                console.log(oEvent.which)
+                if (oEvent.which == 189) {
+                    return '-';
+                }
+                // Fall back to the default decoder in all other cases
+                return onScan.decodeKeyEvent(oEvent);
+            },
+            suffixKeyCodes: [13], // enter-key expected at the end of a scan
+            reactToPase: true, // Compatibility to built-in scanners in paste-mode (as opposed to keyboard-mode)
+            avgTimeByChar: 60, //Slowed down for newer scanner
+            onScan: function (sCode, iQty) { // Alternative to document.addEventListener('scan')
+                console.log('Scanned: ' + iQty + 'x ' + sCode);
+                var prev_code = $('#id_barcode')[0].value;
+                $('#id_barcode')[0].value = sCode;
+                if ($('#id_auto_load')[0].checked) {
+                    {% if add_mode == 3 %}
+                        if (prev_code === sCode) {
+                            SubForm();
+                        } else {
+                            loadpage(sCode);
+                        }
+                    {% else %}
+                        loadpage(sCode);
+                    {% endif %}
+                }
+
+            },
+            onKeyDetect: function (iKeyCode) { // output all potentially relevant key events - great for debugging!
+                console.log('Pressed: ' + iKeyCode);
+            }
+        });
+
+        // Initialize with options
+        $(document).ready(function () {
+            {% if add_mode %}
+                console.log('add enabled');
+                $('#id_add_mode').click();
+                $('#loadadd').text("Add");
+
+            {% else %}
+                console.log('add disabled');
+                $('#id_view_mode').click();
+                $('#loadadd').text("Load");
+
+            {%  endif %}
+            {% if auto_print_enabled %}
+                $('#id_auto_print_mode').click();
+            {% else %}
+                $('#id_no_print_mode').click();
+            {%  endif %}
+            {%  if auto_load %}
+                $('#id_auto_load').click();
+            {% else %}
+                $('#id_no_auto_load').click();
+            {% endif %}
+
+
+            $("#clear").click(function () {
+                loadpage("")
+            });
+            $("#loadadd").click(function () {
+                loadpage($('#id_barcode')[0].value)
+            });
+            $('#id_add_mode').click(function () {
+                $('#loadadd').text("Add")
+            })
+            $('#id_view_mode').click(function () {
+                $('#loadadd').text("Load")
+
+            })
+            {% if print_x_on_load %}
+                for (let i = 0; i < {{print_x_on_load }}; i++) {
+                    $('#print').click()
+                }
+            {% endif %}
+        });
+
+
+    </script>
+
+{% endblock %}

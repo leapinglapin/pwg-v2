@@ -1,0 +1,29 @@
+{% extends 'filtered_list_view.html' %}
+{% load static %}
+
+{% block title %}Your Downloads{% endblock %}
+
+
+{% block content_header %}
+    <h2 class="mb-4"> Downloads <a class="btn btn-success" href="{% url 'downloads_v2' %}" id="refresh"> Try v2 </a>
+        <a class="btn btn-success" href="{% url 'account_downloads' refresh=1 %}" id="refresh"> Check for new items </a>
+    </h2>
+{% endblock %}
+
+{% block alternate %}
+    <p class="p-6">
+        Your downloads will appear here. If you are a new patron and expecting downloads to be available here,
+        please ensure the email for your account is the same as your email and wait up to 4 hours for us to
+        retrieve information from patreon.
+    </p>
+{% endblock %}
+
+{% block list %}
+    {% include 'digital/snippets/downloads_list.html' %}
+{% endblock %}
+
+
+
+
+
+

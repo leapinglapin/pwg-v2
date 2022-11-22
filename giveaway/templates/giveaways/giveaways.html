@@ -1,0 +1,61 @@
+{% extends 'container.html' %}
+{% load templatehelpers %}
+{% load giveaway_tags %}
+{% load static %}
+
+{% block title %}Giveaways{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <div>
+        {% if list %}
+            {% for giveaway in list %}
+                <div class="row mb-3">
+                    <div class="col">
+                        <div class="card">
+                            <div class="row no-gutters">
+                                <div class="col-md-4">
+                                    <img class='card-img img-thumbnail '
+                                         src="{{ giveaway.product.main_image.image.url }}"
+                                         alt="{{ giveaway.product.main_image.alt_text }}"/>
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h3>{{ giveaway.title }} -
+                                            <a href="{% url 'product_detail' product_slug=giveaway.product.slug %}">
+                                                {{ giveaway.product.name }}
+                                            </a></h3>
+                                        <p>{{ giveaway.description }}</p>
+                                        <p> Ends at {{ giveaway.end_time }}</p>
+                                        {% if user.is_authenticated %}
+                                            {% if user|is_entered_in:giveaway %}
+                                                <a class="btn btn-success"> Entered! </a>
+                                            {% else %}
+                                                <a class="btn btn-primary"
+                                                   href="{% url 'enter_giveaway' giveaway.id %}">Enter</a>
+                                            {% endif %}
+                                        {% else %}
+                                            <a class="btn btn-primary" href="{% url 'account_login' %}">Login</a> or
+                                            <a class="btn btn-secondary" href="{% url 'account_signup' %}">Sign Up</a>
+                                            to
+                                            enter!
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% else %}
+            No giveaways are being run at this time. Check back later. Thanks
+        {% endif %}
+        <div>
+            No purchase necessary. 1 entry per giveaway per person.
+            Offer only valid in the United States to those of 18 years of age or older.
+        </div>
+    </div>
+{% endblock %}

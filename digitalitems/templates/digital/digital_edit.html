@@ -1,0 +1,10 @@
+{% extends 'create_from_form.html' %}
+{% load static %}
+
+{% block title %} Edit {{ di.product.name }} Digital {% endblock %}
+        {% block info_before %}
+    {% endblock %}
+    <h1>{{ di.product.name }}</h1>
+    <p> {{ di.product.description }} </p>
+    {% block info_after %}
+    {% endblock %}

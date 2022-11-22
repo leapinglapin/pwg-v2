@@ -1,0 +1,82 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ pack.name }}{% endblock %}
+{% block extrastyle %}
+    <style>
+        .card-img {
+            object-fit: cover;
+            height: 20vh;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <div class="col-12 col-md-9 col-xl-10 py-md-3 pl-md-5">
+        <h1>{{ pack.name }}
+            {% if user.is_authenticated %}
+                <!--
+                {% if download_list %}
+                    <button pack_id="{{ pack.id }}"
+                            date="{% now "YmdHi" %}"
+                            class="Download_Pack_Button btn btn-secondary"
+                            id="download_pack_{{ pack.id }}">
+                        Download All
+                    </button>
+                {% endif %}
+                -->
+                </h1>
+            {% else %}
+                </h1>
+                <h2>
+                    <a class="btn btn-secondary" href="{% url 'account_login' %}"> Log in to view your downloads! </a>
+                </h2>
+            {% endif %}
+        {% include 'subscription/snippets/pack_info.html' %}
+        {% if user.is_authenticated %}
+            <h2>Purchased Items:</h2>
+            {% include 'digital/snippets/downloads_list.html' %}
+        {% endif %}
+        {% if unpurchased %}
+            {% if user.is_authenticated %}
+                <h2> Unpurchased:</h2>
+            {% endif %}
+            {% for di in unpurchased %}
+                <div class="row mb-3">
+                    <div class="col">
+                        <div class="card">
+                            <div class="row no-gutters">
+                                {% if di.product.should_be_visible or not di.product.page_is_draft %}
+                                    {% if di.product.visible %}
+                                        <a href="{% url 'product_detail' product_slug=di.product.slug %}">
+                                    {% endif %}
+                                <div class="col-md-4">
+                                    <img class='card-img' src="{{ di.product.main_image.image.url }}"
+                                         alt="{{ di.product.main_image.alt_text }}">
+                                </div>
+                                <div class="col-md-8">
+                                    <div class="card-body">
+                                        <h2>{{ di.product.name }}
+                                        </h2>
+                                    </div>
+                                </div>
+                                {% if di.product.visible %}
+                                    </a>
+                                {% endif %}
+
+                                {% else %}
+                                    Not yet revealed!
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
+{% endblock content %}
+
+
+

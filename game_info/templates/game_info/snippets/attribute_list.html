@@ -1,0 +1,7 @@
+{% if attributes %}
+    <ul>
+    {% for attribute in attributes|dictsort:"name" %}
+        <li><a href="{% url "attribute" attribute_id=attribute.id %}">{{ attribute.name }}</a></li>
+    {% endfor %}
+    </ul>
+{% endif %}

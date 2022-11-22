@@ -1,0 +1,36 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Backorders{% endblock %}
+
+
+{% block content %}
+    <table>
+        <tr>
+            <th>Product</th>
+            <th>Quantity</th>
+        </tr>
+        {% for backorder in backorders %}
+            {% with item=backorder.item %}
+                <tr>
+                    <td>
+                        <a href="{% url 'manage_product' partner_slug=partner.slug product_slug=item.product.slug %}">
+                            {{ item.product.name }}
+
+                        </a>
+                    </td>
+                    <td>
+                        {{ backorder.quantity }}
+                        <a class="btn btn-danger"
+                           href="{% url 'clear_backorder' partner_slug=partner.slug backorder_id=backorder.id %}">
+                            Clear
+                        </a>
+                    </td>
+                </tr>
+
+            {% endwith %}
+
+        {% endfor %}
+    </table>
+
+{% endblock %}

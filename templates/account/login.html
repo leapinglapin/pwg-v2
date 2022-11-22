@@ -1,0 +1,52 @@
+{% extends 'container.html' %}
+{% load static %}
+{% load account socialaccount %}
+
+{% block title %}Login{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+    <link rel="stylesheet" href="{% static 'css/signin.css' %}">
+
+{% endblock %}
+{% block content %}
+<body class="text-center">
+    <form class="form-signin" method="POST" action="{% url 'account_login' %}">
+
+    {% csrf_token %}
+    {% if user.is_authenticated %}
+        <h1 class="h2">
+            You are already logged in, <br>
+            but you can connect with Patreon
+        </h1>
+    {% else %}
+        <p>If you have not created an account yet, then please
+            <a href="{{ signup_url }}">sign up</a> first.</p>
+    {% endif %}
+    <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+        {% csrf_token %}
+        {{ form.as_p }}
+        {% if redirect_field_value %}
+            <input type="hidden" name="{{ redirect_field_name }}" value="{{ redirect_field_value }}"/>
+        {% endif %}
+        <a class="btn btn-lg btn-secondary btn-block secondaryAction"
+           href="{% url 'account_reset_password' %}">Forgot Password?</a>
+<input type="submit" value="Sign in"
+           class="btn btn-lg btn-primary btn-block"/>
+
+
+
+
+    <h1 class="h2 mb-3 font-weight-normal">or </h1>
+    {% get_providers as socialaccount_providers %}
+    {% if socialaccount_providers %}
+        {% include "socialaccount/snippets/provider_list.html" with process="login" %}
+
+    {% endif %}
+    </form>
+
+
+<br>
+</body>
+
+{% endblock content %}

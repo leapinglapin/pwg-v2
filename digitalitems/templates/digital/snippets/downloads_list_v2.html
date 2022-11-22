@@ -1,0 +1,51 @@
+{% load digitalhelpers %}
+
+{% for index, data in download_list.items %}
+    {% with di=data.info root_folder=data.root_folder %}
+        {% with di.product.visible as prod_visible %}
+            <ul class="xl:divide-y-2 xl:divide-neutral_back shoplist">
+                <li class="bg-white rounded-md xl:rounded-none shadow xl:shadow-none mb-3 xl:mb-0">
+                    <div class="card">
+                        <div class="row no-gutters">
+                            <div class="flex flex-col xl:flex-row gap-4 xl:gap-6 flex-grow">
+                                <div class="w-full xl:w-64 h-64 flex-shrink-0 relative">
+
+                                    {% if prod_visible %}
+                                        <a href="{% url 'product_detail' product_slug=di.product.slug %}">
+                                    {% endif %}
+                                    <img class='w-full h-full object-cover rounded-t-md xl:rounded-t-none'
+                                         src="{{ di.product.main_image.image }}"
+                                         alt="{{ di.product.main_image.alt_text }}">
+                                    {% with di.download_overlay_banner as banner %}
+                                        {% if banner %}
+                                            <div class="absolute w-full object-contain top-5 bg-red-600 text-center text-white ">{{ banner }}</div>
+                                        {% endif %}
+                                    {% endwith %}
+                                    {% if prod_visible %}
+                                        </a>
+                                    {% endif %}
+                                </div>
+                                <div class="flex-grow p-3 xl:pl-0">
+                                    <div class="flex flex-row col-span-2 items-center justify-between gap-2 mb-3">
+                                        {% if prod_visible %}
+                                            <a href="{% url 'product_detail' product_slug=di.product.slug %}">
+                                        {% endif %}
+                                        <h2>{{ di.product.name }}</h2>
+                                        {% if prod_visible %}
+                                            </a>
+                                        {% endif %}
+                                        {% if di.available_for_download and di.enable_download_all %}
+                                            {% include 'digital/snippets/download_all_button.html' %}
+                                        {% endif %}
+                                    </div>
+                                    {% react_render component="Download" props=root_folder %}
+
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </li>
+            </ul>
+        {% endwith %}
+    {% endwith %}
+{% endfor %}

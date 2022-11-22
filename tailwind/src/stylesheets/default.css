@@ -1,0 +1,159 @@
+@tailwind base;
+
+@layer base {
+    body {
+        font-family: system-ui, -apple-system,
+            /* Firefox supports this but not yet `system-ui` */ "Segoe UI",
+            Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
+            "Segoe UI Emoji";
+        color: #212529;
+    }
+
+    blockquote,
+    dl,
+    dd,
+    h1,
+    h2,
+    h3,
+    h4,
+    h5,
+    h6,
+    hr,
+    figure,
+    p,
+    pre {
+        margin: 0;
+    }
+
+    *,
+    ::before,
+    ::after {
+        border-width: 0;
+        border-style: solid;
+        border-color: theme("borderColor.default", currentColor);
+    }
+
+    label {
+        margin: 0;
+    }
+}
+
+@tailwind components;
+@tailwind utilities;
+
+@layer utilities {
+    @variants responsive {
+        .first-child-line-clamp-3 > p {
+            @apply line-clamp-3;
+        }
+
+        .first-child-line-clamp-6 > p {
+            @apply line-clamp-6;
+        }
+
+        .all-other-children-hidden > :not(:first-child) {
+            display: none;
+        }
+
+        .grid-rows-2-first-min {
+            grid-template-rows: min-content auto;
+        }
+
+        .grid-cols-2-auto {
+            grid-template-columns: repeat(2, auto);
+        }
+    }
+}
+
+input[type="checkbox"] {
+    border: 1px solid #6b7280;
+}
+
+#filter_form .treewidget-container {
+    @apply border-none text-sm p-0 min-w-0 !important;
+}
+
+#filter_form .treewidget {
+    @apply h-48 overflow-auto;
+}
+#filter_form .select-dropdown {
+    @apply block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md;
+}
+
+.reset-select {
+    @apply appearance-none bg-transparent border-none p-0 m-0 w-full;
+}
+
+.shoplist {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.btn {
+    @apply text-white !important;
+    border-radius: 12px;
+}
+.btn-success,
+.btn:active,
+.btn:focus {
+    @apply border-white outline-white !important;
+    box-shadow: none;
+}
+.btn-primary {
+    @apply bg-primary-800 border-primary-800 !important;
+}
+
+.btn-primary:hover {
+    @apply bg-primary-500 border-primary-500 !important;
+}
+
+.btn-primary:focus {
+    @apply outline-primary-500 !important;
+    box-shadow: none;
+}
+
+.btn-primary:active {
+    @apply outline-white bg-primary-500 !important;
+    box-shadow: none;
+}
+
+body {
+    @apply bg-neutral_back !important;
+}
+
+/* unvisited link */
+a:not(.unstyled):link {
+    @apply text-primary-600;
+}
+
+/* visited link */
+a:not(.unstyled):visited {
+    @apply text-primary-600;
+}
+
+/* mouse over link */
+a:not(.unstyled):hover {
+    @apply text-primary-500;
+}
+
+/* selected link */
+a:not(.unstyled):active {
+    @apply text-primary-600;
+}
+
+.navbar {
+    @apply bg-gray-900;
+}
+
+.popover {
+    max-width: fit-content;
+}
+.popover-header{
+    @apply justify-around;
+}
+
+.checkout-table > tbody > tr > td{
+    vertical-align: middle;
+}
+

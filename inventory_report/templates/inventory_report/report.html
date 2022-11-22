@@ -1,0 +1,71 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ report }} {{ location }}{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    <script src="{% static "js/onscan.min.js" %}"></script>
+
+    <br>
+    <h2>{{ report }}</h2>
+    {% if location %}
+        <h3>{{ location }}</h3>
+    {% else %}
+        <ul>
+            {% for location in locations %}
+                <li>
+                    <a href="{% url "report_location" partner_slug=partner.slug report_id=report.id location_id=location.id %}">{{ location }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+
+    {% endif %}
+    <br>
+    <table>
+        <tr>
+            <th>Timestamp</th>
+            <th>Barcode</th>
+            <th>Location</th>
+        </tr>
+        {% for line in lines %}
+            <tr>
+                <td>{{ line.timestamp }}</td>
+                <td>{{ line.barcode }}</td>
+                <td>{{ line.location }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+
+
+    <p>Refresh the page to view scanned lines</p>
+    <script>
+        onScan.attachTo(document, {
+            keyCodeMapper: function (oEvent) {
+                if (oEvent.which == 189) {
+                    return '-';
+                }
+                // Fall back to the default decoder in all other cases
+                return onScan.decodeKeyEvent(oEvent);
+            },
+            suffixKeyCodes: [13], // enter-key expected at the end of a scan
+            reactToPase: true, // Compatibility to built-in scanners in paste-mode (as opposed to keyboard-mode)
+            avgTimeByChar: 60, //Slowed down for newer scanner
+            onScan: function (sCode, iQty) { // Alternative to document.addEventListener('scan')
+                console.log('Scanned: ' + iQty + 'x ' + sCode);
+                let url = "/partner/{{ partner.slug }}/inv_report/{{ report.id }}/"
+                {% if location %}
+                    url += "{{ location.id }}/"
+                {% endif %}
+                fetch(url + "add/" + sCode + "/")
+            },
+            {% comment %}
+                    onKeyDetect: function (iKeyCode) { // output all potentially relevant key events - great for debugging!
+                       console.log('Pressed: ' + iKeyCode);
+                   }
+           {% endcomment %}
+        });
+    </script>
+
+{% endblock %}

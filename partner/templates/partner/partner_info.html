@@ -1,0 +1,38 @@
+{% extends 'container.html' %}
+{% load wagtailcore_tags %}
+{% load static %}
+
+{% block title %}{{ partner_info.name }}{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <h1>{{ partner_info.name }}</h1>
+    {{ partner_info.description|richtext }}
+
+    <h2><a href="/shop/?partner={{ partner_info.slug }}">Shop from {{ partner_info.name }}</a></h2>
+    {% if partner_info.campaigns.all %}
+        <h2>Campaigns</h2>
+        <div class="row">
+            {% for campaign in partner_info.campaigns.all %}
+                <div class="col">
+                    <a href="{% url 'view_campaign' campaign_slug=campaign.slug %}"><h2>{{ campaign.name }}</h2></a>
+                    {% include 'subscription/snippets/campaign_info.html' %}
+                    {% include 'subscription/snippets/discount_info.html' %}
+                </div>
+            {% endfor %}
+        </div>
+        <h2>Explore Releases</h2>
+        <div class="row">
+            {% for campaign in partner_info.campaigns.all %}
+                <div class="col">
+
+                    {% include 'subscription/snippets/packs_in_campaing.html' %}
+                </div>
+
+            {% endfor %}
+        </div>
+    {% endif %}
+{% endblock %}

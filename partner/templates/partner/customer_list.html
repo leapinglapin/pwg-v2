@@ -1,0 +1,93 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Customer List{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <div>
+        <form action="." method="get" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="fieldWrapper">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                    {% if field.help_text %}
+                        <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <input type="submit" value="Submit">
+        </form>
+    </div>
+    {% include 'snippets/page_numbers.html' %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Username</th>
+            <th scope="col">Email</th>
+            <th scope="col">Verified?</th>
+            <th scope="col">Primary</th>
+            <th scope="col">Ban Status</th>
+            <th scope="col">First Name</th>
+            <th scope="col">Last Name</th>
+            <th scope="col">Last Login</th>
+            <th scope="col">Date Joined</th>
+        </tr>
+        </thead>
+        {% for user in page %}
+            {% for emailaddress in user.emailaddress_set.all %}
+                <tr>
+                    {% if forloop.first %}
+                        <td>
+                            {% if admin %}
+                                <a href="{% url 'admin_customer_details' user_id=user.id %}">
+                                    {{ user.username }}
+                                </a>
+                            {% else %}
+                                <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=user.id %}">
+                                    {{ user.username }}
+                                </a>
+                            {% endif %}
+                        </td>
+
+                    {% else %}
+                        <td></td>
+                    {% endif %}
+
+                    <td>{{ emailaddress.email }}</td>
+                    <td>
+                        {% if emailaddress.verified %}
+                            <span class="verified">Verified</span>
+                        {% else %}
+                            <span class="unverified">Unverified</span>
+                        {% endif %}
+                    </td>
+                    <td>{% if emailaddress.primary %}<span class="primary">Primary</span>{% endif %}</td>
+                    <td>
+                        {% if user.is_active %}
+                        {% else %}
+                            Banned
+                        {% endif %}
+                    </td>
+                    {% if forloop.first %}
+                        <td>{{ user.first_name }}</td>
+                        <td>{{ user.last_name }}</td>
+                        <td>{{ user.last_login }}</td>
+                        <td>{{ user.date_joined }}</td>
+                    {% else %}
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                        <td></td>
+                    {% endif %}
+                </tr>
+            {% endfor %}
+        {% endfor %}
+    </table>
+    {% include 'snippets/page_numbers.html' %}
+
+{% endblock %}

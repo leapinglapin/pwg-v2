@@ -1,0 +1,90 @@
+{% load digitalhelpers %}
+{% load templatehelpers %}
+<tr {% if indent > 1 %} style="display: none;" {% endif %}
+                        class="folder_header folder_header_{{ full_path }} folder_row_{{ header_path }} w-5/8">
+    <td class="w-5/8">
+        {{ ">"|multiply:indent|slice:":-1" }} {{ folder_name }}
+        <button class='folder_expand {{ recursive_button_class }} btn btn-secondary' type="button"
+                onclick="expand(this, '{{ full_path }}')">
+            Expand
+        </button>
+        {% if purchased or partner %}
+            {% if di.available_for_download or partner %}
+                <button class='Download_Folder_Button btn btn-secondary' folder_path='{{ full_path }}'
+                        type="button"
+                        downloadable_id="{{ metadata }}"
+                        di_id="{{ di.id }}"
+                        download_as="{{ product_slug }} {{ filename }} {% now "YmdHi" %}"
+                        id="download_all_{{ di.id }}_{{ full_path }}"> Download Folder
+                </button>
+            {% endif %}
+        {% endif %}
+        {% if partner %}
+            <button product_slug="{{ di.product.slug }}" di_id='{{ di.id }}'
+                    downloadable_id='{{ metadata }}'
+                    type="button"
+                    class="RemoveFolderButton btn btn-danger" id="remove_folder_{{ metadata }}">
+                X
+            </button>
+        {% endif %}
+        <script>
+            function expand(element, full_path) {
+
+                if (element.toggleAttribute('expanded')) {
+                    let rows = document.getElementsByClassName("folder_row_" + full_path)
+                    console.log(rows)
+                    Array.prototype.forEach.call(rows, function (row) {
+                        row.style.display = 'table-row';
+                    });
+                } else {
+                    let rows = document.getElementsByClassName("folder_recursive_" + full_path)
+                    console.log(rows)
+
+                    Array.prototype.forEach.call(rows, function (row) {
+                        row.style.display = 'none';
+                    });
+                    rows = document.getElementsByClassName("folder_row_" + full_path)
+                    console.log(rows)
+
+                    Array.prototype.forEach.call(rows, function (row) {
+                        row.style.display = 'none';
+                    });
+                    let buttons = document.getElementsByClassName("button_recursive_" + full_path)
+                    console.log(rows)
+
+                    Array.prototype.forEach.call(buttons, function (button) {
+                        button.removeAttribute('expanded')
+                    });
+                }
+            }
+        </script>
+    </td>
+    <td class="w-1/8"> {{ folder|length|add:-1 }} item{% if folder|length > 2 %}s{% endif %} </td>
+    {# Metadata is an item, so we had to bump up the count #}
+    <td class="w-1/8"></td>
+    <td></td>
+</tr>
+
+{% for filename, file in folder.items %}
+    {% if filename == 'metadata' %}
+        {% include 'digital/snippets/upload_row.html' with parent_node_id=metadata %}
+    {% else %}
+        {% if not file.clean_name %}
+            {% with spaceless_filename=filename|replace_spaces %}
+                {% with  recursive_download_class=recursive_download_class|add:"/"|add:spaceless_filename|add:" download_recursive_"|add:full_path %}
+                    {% with recursive_class=recursive_class|add:" folder_recursive_"|add:full_path %}
+                        {% with recursive_button_class=recursive_button_class|add:" button_recursive_"|add:full_path %}
+                            {% with folder=file folder_name=filename indent=indent|add:1 metadata=file|get_metadata_from_folder %}
+                                {% include 'digital/snippets/di_folder.html' with header_path=full_path full_path=full_path|add:'/'|add:spaceless_filename %}
+                            {% endwith %}
+                        {% endwith %}
+                    {% endwith %}
+                {% endwith %}
+            {% endwith %}
+        {% else %}
+            <tr style="display: none;" class='folder_row folder_row_{{ full_path }} {{ recursive_class }}'>
+                {% include 'digital/snippets/di_row.html' %}
+            </tr>
+        {% endif %}
+    {% endif %}
+{% endfor %}

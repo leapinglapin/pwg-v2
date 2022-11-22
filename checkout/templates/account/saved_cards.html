@@ -1,0 +1,109 @@
+{% extends 'account/base.html' %}
+{% load static %}
+
+{% block title %}Saved Cards{% endblock %}
+{% block extrastyle %}
+    <script src="https://js.stripe.com/v3/"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@rc/dist/js.cookie.min.js"></script>
+    <link rel="stylesheet" href="{% static 'css/stripe.css' %}"/>
+
+    <style>
+        .cardbox {
+            width: 30vw;
+            min-width: 500px;
+            align-self: center;
+            box-shadow: 0px 0px 0px 0.5px rgba(50, 50, 93, 0.1),
+            0px 2px 5px 0px rgba(50, 50, 93, 0.1), 0px 1px 1.5px 0px rgba(0, 0, 0, 0.07);
+            border-radius: 7px;
+            padding: 40px;
+        }
+    </style>
+
+{% endblock %}
+{% block content %}
+    <div>
+        By entering my card details, I authorize Comics, Games, and Things LLC to send instructions to the financial
+        institution that issued my card to take payments from my card account in accordance with any subscriptions.
+    </div>
+
+    {% if cards.data %}
+        {% for card in cards.data %}
+            <div class="cardbox col">
+                <div class="row">
+                    <div class="col">
+
+                        {{ card.billing_details.name }}
+                        <a href="{% url 'remove_card' card_id=card.id %}">Remove Card</a>
+                    </div>
+                    <div class="col">
+                        Zip: {{ card.billing_details.address.postal_code }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col">
+                        **** **** **** {{ card.card.last4 }}
+                    </div>
+
+
+                    <div class="col">
+                        Expires: {{ card.card.exp_month }} / {{ card.card.exp_year }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        {% endfor %}
+    {% else %}
+        <p>
+            Your saved payment methods will appear here
+        </p>
+    {% endif %}
+    <!-- placeholder for Elements -->
+    <form id="setup-form" data-secret="{{ intent.client_secret }}">
+        <input id="cardholder-name" type="text" placeholder="Cardholder's Name">
+        <div id="card-element"></div>
+        <button id="card-button">
+            Save Card
+        </button>
+    </form>
+
+    <script>
+        var stripe = Stripe('{{ publishableAPIKey }}');
+
+        var elements = stripe.elements();
+        var cardElement = elements.create('card');
+        cardElement.mount('#card-element');
+
+        var cardholderName = document.getElementById('cardholder-name');
+        var setupForm = document.getElementById('setup-form');
+        var clientSecret = setupForm.dataset.secret;
+
+        setupForm.addEventListener('submit', function (ev) {
+            ev.preventDefault();
+            //TODO: Show some sort of loading symbol
+            stripe.confirmCardSetup(
+                clientSecret,
+                {
+                    payment_method: {
+                        card: cardElement,
+                        billing_details: {
+                            name: cardholderName.value,
+                        },
+                    },
+                }
+            ).then(function (result) {
+                if (result.error) {
+                    console.log(result.error)
+                    setupForm.innerHTML = result.error
+
+                } else {
+                    // The setup has succeeded. Display a success message.
+                    setupForm.innerHTML = "Success!"
+                    location.reload()
+                }
+            });
+        });
+    </script>
+
+{% endblock %}

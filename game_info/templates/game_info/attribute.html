@@ -1,0 +1,37 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ attribute.name }}{% endblock %}
+{% block extrastyle %}
+{% endblock %}
+{% block content %}
+    <em>
+        {% if attribute.factions %}
+            {% for faction in attribute.factions.all %}
+                <div>
+
+                    <a href="{% url "game" game_slug=attribute.game.slug %}">{{ attribute.game.name }}</a>
+                    {% include 'game_info/snippets/recursive_parent_faction.html' %}
+                    > <a href="{% url "attribute" attribute_id=attribute.id %}">{{ attribute.name }}</a>
+                </div>
+
+            {% endfor %}
+        {% else %}
+            <div>
+                <a href="{% url "game" game_slug=attribute.game.slug %}">{{ attribute.game.name }}</a>
+                > <a href="{% url "attribute" attribute_id=attribute.id %}">{{ attribute.name }}</a>
+            </div>
+
+        {% endif %}
+
+    </em>
+    <h2> {{ attribute.name }}</h2>
+    <p>
+        {% if attribute.description %}
+            {{ attribute.description }}
+        {% endif %}
+    </p>
+    {% include 'snippets/product_small_cards.html' with featured_items=items.all %}
+
+
+{% endblock %}

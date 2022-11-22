@@ -1,0 +1,7 @@
+{% if faction.subfactions %}
+    <ul>
+        {% for subfaction in faction.subfactions.all|dictsort:"name" %}
+            <li>{% include 'game_info/snippets/faction_with_subfactions.html' with faction=subfaction %}</li>
+        {% endfor %}
+    </ul>
+{% endif %}

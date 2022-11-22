@@ -1,0 +1,23 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    {% include "checkout/snippets/checkout_process_bar.html" %}
+    <div>
+        {% include 'checkout/snippets/static_cart_summary.html' %}
+    </div>
+
+    <div>
+        <a href="{% url 'view_cart' %}">
+            <button type="button" class="btn btn-primary">Edit Cart</button>
+        </a>
+        <a href="{% url next_view %}">
+            <button type="button" class="btn btn-primary">Next</button>
+        </a>
+
+    </div>
+{% endblock %}

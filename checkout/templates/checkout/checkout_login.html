@@ -1,0 +1,31 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    {% include "checkout/snippets/checkout_process_bar.html" %}
+    {% include "checkout/snippets/small_cart_summary.html" %}
+    <div>
+
+        {% if cart.is_account_required == False %}
+            <form action="{% url 'checkout_login' %}" method="post" enctype="multipart/form-data">
+                {% csrf_token %}
+                {% for field in form %}
+                    <div class="fieldWrapper">
+                        {{ field.errors }}
+                        {{ field.label_tag }} {{ field }}
+                        {% if field.help_text %}
+                            <p class="help">{{ field.help_text|safe }}</p>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+                <button type="submit" class="btn btn-primary">Checkout with Email</button>
+            </form>
+        {% endif %}
+        <a class="btn btn-primary" href="{% url 'account_login' %}">Login</a>
+        <a class="btn btn-secondary" href="{% url 'account_signup' %}">Sign Up</a>
+    </div>
+{% endblock %}

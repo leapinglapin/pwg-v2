@@ -1,0 +1,62 @@
+<div class="btn-group" role="group" aria-label="Checkout Section">
+    <a href="{% url 'checkout_start' %}">
+        <button type="button" class="btn {% if cart.is_frozen %} btn-success {% else %} btn-secondary {% endif %}">
+            Start
+        </button>
+    </a>
+    {% if not user.is_authenticated %}
+        <a href="{% url 'checkout_login' %}">
+            <button type="button"
+                    class="btn {% if cart.is_account_set %} btn-success {% else %} btn-secondary {% endif %}">
+                Login or Email
+            </button>
+        </a>
+    {% endif %}
+    {% if cart.is_shipping_required %}
+        <a href="{% url 'checkout_delivery_method' %}">
+            <button type="button"
+                    class="btn {% if cart.delivery_method is not None %} btn-success {% else %} btn-secondary {% endif %}">
+                Pickup or Delivery
+            </button>
+        </a>
+        {% if cart.delivery_method != cart.PICKUP_ALL %}
+            <a href="{% url 'checkout_shipping_address' %}">
+                <button type="button"
+                        class="btn {% if cart.is_shipping_set %} btn-success {% else %} btn-secondary {% endif %}">
+                    Shipping Address
+                </button>
+            </a>
+        {% endif %}
+    {% endif %}
+
+    {% if cart.is_payment_required %}
+        <a href="{% url 'checkout_payment_method' %}">
+            <button type="button"
+                    class="btn {% if cart.is_payment_method_set %} btn-success {% else %} btn-secondary {% endif %}">
+                Payment Method
+            </button>
+        </a>
+        {% if cart.is_billing_addr_required %}
+            <a href="{% url 'checkout_billing_address' %}">
+                <button type="button"
+                        class="btn {% if cart.billing_address is not None %} btn-success {% else %} btn-secondary {% endif %}">
+                    Billing Address
+                </button>
+            </a>
+        {% endif %}
+        {% if cart.payment_method == cart.PAY_STRIPE %}
+            <a href="{% url 'checkout_pay_online' %}">
+                <button type="button"
+                        class="btn {% if cart.paid %} btn-success {% else %} btn-secondary {% endif %}">
+                    Pay online
+                </button>
+            </a>
+        {% endif %}
+
+    {% endif %}
+
+    <a>
+        <button type="button" class="btn btn-secondary disabled">Done</button>
+    </a>
+
+</div>

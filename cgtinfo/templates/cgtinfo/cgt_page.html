@@ -1,0 +1,22 @@
+{% extends 'container.html' %}
+{% load static %}
+{% load wagtailcore_tags %}
+{% load wagtailimages_tags %}
+{% block extrastyle %}
+<style>
+.container.content {
+    margin-top: 2em;
+}
+</style>
+{% endblock %}
+{% block main %}
+
+    <!-- Wrap the rest of the page in another container to center all the content. -->
+
+    <div class="container content">
+
+    {{ page.body|richtext }}
+
+    </div>
+{% endblock %}
+

@@ -1,0 +1,68 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    <div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Username</th>
+                <th scope="col">Email</th>
+                <th scope="col">Order ID</th>
+            </tr>
+            </thead>
+            <tr>
+                <td>
+                    {{ past_cart.owner.username }}
+                </td>
+                <td>
+                    {{ past_cart.owner.email }}
+                </td>
+                <td>
+                    {{ past_cart.id }}
+                </td>
+            </tr>
+        </table>
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Items</th>
+                <th scope="col">Location</th>
+                <th scope="col">Status</th>
+            </tr>
+            </thead>
+            <tr>
+                <td>
+                    {{ past_cart.date_submitted }}
+                </td>
+                <td>{{ past_cart.num_items }}</td>
+                <td>
+                    {% if past_cart.at_pos %}
+                        {{ past_cart.payment_partner }}
+                    {% else %}
+                        Online
+                    {% endif %}
+                </td>
+                <td>
+                    {{ past_cart.status }}
+                    {% if past_cart.status != "Cancelled" and past_cart.status != "Completed" and past_cart.cancellable %}
+                        <a class="btn btn-danger"
+                           href="{% url 'past_order_mark_cancelled' cart_id=past_cart.id %}">
+                            Cancel
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        {% include 'checkout/snippets/cart_address_info.html' with cart=past_cart %}
+        {% include 'checkout/snippets/static_cart_summary.html' with cart=past_cart %}
+    </div>
+    <div>
+
+    </div>
+{% endblock %}

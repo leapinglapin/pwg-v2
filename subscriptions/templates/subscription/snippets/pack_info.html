@@ -1,0 +1,9 @@
+{% if pack.require_multiple_months %}
+    {{ pack.number_of_months }}  pledges in the period from
+{% endif %}
+{{ pack.pledges_from }} to {{ pack.display_end_time }}
+for patrons in the following tiers:
+{% for tier in pack.tier_req.all %}
+    {{ tier }}{% if not forloop.last %}, {% endif %}
+
+{% endfor %}

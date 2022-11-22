@@ -1,0 +1,40 @@
+{% load templatehelpers %}
+{% load static %}
+
+{% if partner %}
+    {% if not edit %}
+        <a href="{% url 'digital_edit_mng' partner_slug=partner|slugify product_slug=product_slug di_id=di.id %}">
+            Edit Digital Item
+        </a>
+        <a href="{% url 'digital_delete_mng' partner_slug=partner|slugify product_slug=product_slug di_id=di.id confirm=0 %}">
+            Delete Digital Item
+        </a>
+        <br>
+        Price: {{ di.price }} Default Price: {{ di.default_price }}
+    {% endif %}
+    <div id="upload_info" partner_slug="{{ partner.slug }}" product_slug="{{ product_slug }}"
+         di_id="{{ di_id }}"></div>
+
+{% endif %}
+{% if purchased or partner %}
+    {% if not user|is_verified %}
+        Please verify your email to download files
+    {% else %}
+        {% if di.enable_download_all %}
+            {% if di.available_for_download or partner %}
+                Download your product:
+                {% include 'digital/snippets/download_all_button.html' %}
+            {% endif %}
+        {% endif %}
+    {% endif %}
+{% else %}
+    {% include "checkout/snippets/addtocartbutton.html" with item=di %}
+    Files:
+{% endif %}
+<br>
+<br>
+{% include 'digital/snippets/di_download.html' %}
+<br>
+
+
+{% include 'digital/snippets/derivative.html' %}

@@ -1,0 +1,31 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ faction.name }}{% endblock %}
+{% block extrastyle %}
+{% endblock %}
+{% block content %}
+    <em>
+        <a href="{% url "game" game_slug=faction.game.slug %}">{{ faction.game.name }}</a> {% include 'game_info/snippets/recursive_parent_faction.html' %}
+    </em>
+    <h2> {{ faction.name }}</h2>
+    <p>
+        {% if faction.description %}
+            {{ faction.description }}
+        {% endif %}
+    </p>
+    {% if faction.subfactions %}
+        {% include 'game_info/snippets/subfaction_list.html' %}
+    {% endif %}
+    {% if faction.attributes %}
+        {% for type, attributes in faction.get_sorted_attributes.items %}
+            <h3>{{ type.name }}</h3>
+            {% include 'game_info/snippets/attribute_list.html' %}
+        {% endfor %}
+    {% endif %}
+    <h3> Featured Products</h3>
+    {% include 'snippets/product_small_cards.html' %}
+    <h3> All Products</h3>
+    {% include 'snippets/product_small_cards.html' with featured_items=items.all %}
+
+{% endblock %}

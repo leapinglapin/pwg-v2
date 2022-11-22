@@ -1,0 +1,48 @@
+{% load digitalhelpers %}
+{% load static %}
+{% load templatehelpers %}
+{% load digitalhelpers %}
+
+<div id="files">
+    <table class="table-auto w-full">
+        <tr class="text-gray-500 align-text-bottom align-bottom">
+            <th class="font-semibold w-5/8">File</th>
+            <th class="font-semibold w-1/8">Size</th>
+            <th class="font-semibold w-1/8">Last <br> Updated</th>
+            <th class="font-semibold w-1/8">Last <br> Downloaded</th>
+        </tr>
+        {% with root_folder|get_metadata_from_folder as metadata %}
+            {% if partner and product %}
+                <tr>
+                    <td>
+                        <form action="{% url 'digital_upload_file_mng'  partner_slug=partner.slug product_slug=product.slug di_id=di.id parent_node_id=metadata %}"
+                              class="cgt_digital_upload dropzone"
+                              parent_node_id="{{ metadata }}"
+                              id="upload-{{ metadata }}">
+                            {% csrf_token %}
+
+                        </form>
+                    </td>
+                    <td>
+                    </td>
+                    <td>
+                    </td>
+                </tr>
+            {% endif %}
+            {% for filename, file in root_folder.items %}
+                {% if filename != 'metadata' %}
+                    {% if not file.clean_name %}
+                        {% with file|get_metadata_from_folder as metadata %}
+                            {% include 'digital/snippets/di_folder.html' with folder=file folder_name=filename full_path=filename|replace_spaces indent=1 recursive_download_class="download_recursive_"|add:filename|replace_spaces %}
+                        {% endwith %}
+                    {% else %}
+                        <tr>
+                            {% include 'digital/snippets/di_row.html' with indent=0 %}
+                        </tr>
+
+                    {% endif %}
+                {% endif %}
+            {% endfor %}
+        {% endwith %}
+    </table>
+</div>

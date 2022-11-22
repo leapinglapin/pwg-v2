@@ -1,0 +1,129 @@
+{% extends 'container.html' %}
+{% load templatehelpers %}
+{% load static %}
+
+{% block title %}Billing History{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    {% if summary_breakout %}
+        Breakout of  {{ summary_breakout.timestamp|date:"M. Y" }}
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Partner</th>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Type</th>
+                <th scope="col">Total</th>
+                <th scope="col">Tax</th>
+                <th scope="col">Subtotal</th>
+                <th scope="col">Our Cut (predicted)</th>
+                <th scope="col">Our Cut (actual)</th>
+            </tr>
+            </thead>
+            <tr>
+                <td>{{ summary_breakout.partner }}</td>
+
+                <td>
+                    {{ summary_breakout.timestamp|date:"M. Y" }}
+                </td>
+                <td>{{ summary_breakout.type }} summary</td>
+                <td>{{ summary_breakout.transaction_total }}</td>
+                <td>{{ summary_breakout.transaction_total }}</td>
+                <td>{{ summary_breakout.transaction_subtotal }}</td>
+                <td>{{ summary_breakout.transaction_fees }}</td>
+                <td>{{ summary_breakout.platform_cut }}</td>
+
+            </tr>
+        </table>
+    {% endif %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Update All</th>
+            <th scope="col">Reset</th>
+        </tr>
+        </thead>
+        <tr>
+            <td>
+                <script>
+                    function update_balance() {
+                        fetch("{%  url 'admin_update_balance' %}")
+                            .then(response => {
+                                location.reload()
+                            });
+                    }
+
+                    function reset_balance() {
+                        fetch("{%  url 'admin_reset_balance' %}")
+                            .then(response => {
+                                location.reload()
+                            });
+
+                    }
+                </script>
+
+                <button class="btn btn-primary" onclick="update_balance()">Update</button>
+
+
+            </td>
+
+            <td>
+                <button class="btn btn-danger" onclick="reset_balance()">Reset</button>
+            </td>
+        </tr>
+    </table>
+    {% include 'snippets/page_numbers.html' %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Partner</th>
+            <th scope="col">Timestamp</th>
+            <th scope="col">Type</th>
+            <th scope="col">Total</th>
+            <th scope="col">Tax</th>
+            <th scope="col">Total (No Tax)</th>
+            <th scope="col">Our Cut (predicted)</th>
+            <th scope="col">Our Cut (actual)</th>
+        </tr>
+        </thead>
+        {% for transaction in page %}
+            {% if transaction.is_summary %}
+                <tr>
+                    <td>{{ transaction.partner }}</td>
+                    <td>
+                        <a href="{% url 'admin_summary_breakout' summary_id=transaction.id %}">
+                            {{ transaction.timestamp|date:"M. Y" }}
+                        </a>
+                    </td>
+                    <td>{{ transaction.type }} summary</td>
+                    <td>{{ transaction.transaction_fees }}</td>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    <td>{{ transaction.transaction_fees }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    {% if transaction.type == transaction.PURCHASE %}
+                        <td>{{ transaction.partner }}</td>
+                        <td>{{ transaction.timestamp }}</td>
+                        <td>{{ transaction.type }}</td>
+                        <td>{{ transaction.transaction_total }}</td>
+                        <td> {{ transaction.tax }}   </td>
+                        <td> {{ transaction.collected_less_tax }}   </td>
+                        <td>{{ transaction.transaction_fees }}</td>
+                        <td>{{ transaction.platform_cut }} </td>
+                    {% else %}
+                    {% endif %}
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+    {% include 'snippets/page_numbers.html' %}
+
+{% endblock %}

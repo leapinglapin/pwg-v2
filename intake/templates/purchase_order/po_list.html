@@ -1,0 +1,70 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Purchase Orders{% endblock %}
+
+
+{% block content %}
+
+    <a href="{% url 'create_po' partner_slug=partner|slugify %}">
+        Create PO
+    </a>
+    <table class="table">
+        <tr>
+            <th>Date</th>
+            <th>Distributor</th>
+            <th>Invoice/PO Number</th>
+            <th>Subtotal</th>
+            <th>Amount Paid</th>
+            <th>Completed?</th>
+            <th>Edit</th>
+        </tr>
+        {% for po in po_list %}
+            <tr>
+                <td>{{ po.date }}</td>
+                <td>{{ po.distributor }}</td>
+                <td>
+                    <a href="{% url 'po_details' partner_slug=partner|slugify po_id=po.po_number %}">
+                        {{ po.po_number }}
+                    </a>
+                </td>
+                <td>{{ po.subtotal }}</td>
+                <td>{{ po.amount_charged }}</td>
+                <td>
+                    {% if po.completed %}
+                        <span class="text-green">
+                            <i class="fas fa-check-circle"></i>
+                        </span>
+                    {% else %}
+                        <span class="text-red">
+                    <i class="fas fa-times-circle"></i>
+                            {% if po.empty %}
+                                Empty;
+                            {% endif %}
+                            {% if po.missing_costs %}
+                                Missing costs;
+                            {% endif %}
+                            {% if po.missing_quantities %}
+                                Missing quantity;
+                            {% endif %}
+                            {% if po.cost_does_not_match_up %}
+                                Subtotal != Sum(Costs), Sum(Costs) = {{ po.calculated_total_cost }}
+                            {% endif %}
+                        </span>
+
+                    {% endif %}
+                </td>
+                <td>
+                    <a href="{% url 'edit_po' partner_slug=partner|slugify po_id=po.po_number %}">
+                        Edit
+                    </a>
+                    {% if po.empty %}
+                        <a href="{% url 'delete_po' partner_slug=partner|slugify po_id=po.po_number confirm=0 %}">
+                            Delete
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}

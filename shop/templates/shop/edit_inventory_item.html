@@ -1,0 +1,35 @@
+{% extends "create_from_form.html" %}
+{% block title %}
+    {% if item %}
+        Edit {{ item.product.name }}
+    {% else %}
+        Add a new item for {{ product.name }}
+    {% endif %}
+{% endblock %}
+{% block info_before %}
+    MSRP: {{ product.msrp }} <br>
+    MAP: {{ product.map }} <br>
+    Relevant Price Rule:
+    <a href="{% url 'edit_rule' partner_slug=partner|slugify rule_id=pricing_rule.id %}">
+        {{ pricing_rule }}
+    </a>
+    <br>
+    Price From Rule: {{ price_from_rule }}
+
+
+
+{% endblock %}
+
+{% block info_after %}
+    {% if dist_records %}
+        <h3>Distributor:</h3>
+        {% for dist_item in dist_records %}
+            <div class="card">
+                <h4>{{ dist_item.dist_name }}</h4>
+                {{ dist_item.distributor }}<br>
+                MSRP: {{ dist_item.msrp }}<br>
+                MAP: {{ dist_item.map }}
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endblock %}

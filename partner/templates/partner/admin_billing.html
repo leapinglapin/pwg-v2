@@ -1,0 +1,26 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ partner.name }} Admin{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <h1>Total Platform Balance</h1>
+    Total owed: {{ balance }}
+    <table class="table">
+        <tr>
+            <th>Partner</th>
+            <th>Balance</th>
+        </tr>
+        {% for partner in partners %}
+            <tr>
+                <td>{{ partner.name }}</td>
+                <td>{{ partner.acct_balance }}</td>
+            </tr>
+
+        {% endfor %}
+    </table>
+{% endblock %}

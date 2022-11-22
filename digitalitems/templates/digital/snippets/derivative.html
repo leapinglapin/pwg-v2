@@ -1,0 +1,26 @@
+{% if di.derived_from_all.exists or di.derived_from_any.exists %}
+    This product is a <i>derivative</i>. To purchase it, you must own or have in your cart the products it was derived
+    from.<br>
+
+    {% if di.derived_from_all.exists %}
+        <br>
+        All of the following:
+        <table>
+            {% for prereq_di in di.derived_from_all.all %}
+                {% include 'digital/snippets/derivative_entry.html' with item=prereq_di %}
+            {% endfor %}
+        </table>
+    {% endif %}
+    {% if di.derived_from_any.exists %}
+        {% if di.derived_from_any.exists  and di.derived_from_all.exists %}
+            AND
+        {% endif %}
+        <br>
+        Any of the following:
+        <table>
+            {% for prereq_di in di.derived_from_any.all %}
+                {% include 'digital/snippets/derivative_entry.html' with item=prereq_di %}
+            {% endfor %}
+        </table>
+    {% endif %}
+{% endif %}

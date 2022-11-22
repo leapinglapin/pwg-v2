@@ -1,0 +1,20 @@
+{% load templatehelpers %}
+{% if partner %}
+    <tr style="display: none;" class='folder_row folder_row_{{ full_path }} {{ recursive_class }}'>
+
+        <td>
+            {{ ">"|multiply:indent }}
+            <form action="{% url 'digital_upload_file_mng'  partner_slug=partner.slug product_slug=product.slug di_id=di.id parent_node_id=parent_node_id %}"
+                  class="cgt_digital_upload dropzone"
+                  parent_node_id="{{ parent_node_id }}"
+                  id="upload-{{ parent_node_id }}">
+                {% csrf_token %}
+
+            </form>
+        </td>
+        <td>
+        </td>
+        <td>
+        </td>
+    </tr>
+{% endif %}

@@ -1,0 +1,163 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    <div>
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Username</th>
+                <th scope="col">Email</th>
+                <th scope="col">Order ID</th>
+            </tr>
+            </thead>
+            <tr>
+                <td>
+                    {% if past_cart.owner %}
+                        <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=past_cart.owner.id %}">
+                            {{ past_cart.owner.username }}
+                        </a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if past_cart.owner %}
+                        {{ past_cart.owner.email }}
+                    {% else %}
+                        {{ past_cart.email }}
+                    {% endif %}
+
+                </td>
+                <td>
+                    {{ past_cart.id }}
+                </td>
+            </tr>
+        </table>
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Date</th>
+                <th scope="col">Items</th>
+                <th scope="col">Payment Location</th>
+                <th scope="col">Shipping or Pickup</th>
+                <th scope="col">Status</th>
+            </tr>
+            </thead>
+            <tr>
+                <td>
+                    {{ past_cart.date_submitted }}
+                </td>
+                <td>{{ past_cart.num_items }}</td>
+                <td>
+                    {% if past_cart.payment_partner %}
+                        {% if past_cart.at_pos %} Placed in-store at
+                        {% else %} Placed online with
+                        {% endif %}
+                        {{ past_cart.payment_partner }}
+                    {% else %}
+                        Online
+                    {% endif %}
+                </td>
+                <td>
+                    {{ past_cart.delivery_method }}
+                </td>
+                <td>{{ past_cart.status }}
+                    {% if  past_cart.status != "Paid" and past_cart.status != "Completed" and past_cart.payment_partner.id == partner.id %}
+                        <a class="btn btn-primary"
+                           href="{% url 'partner_order_mark_paid' cart_id=past_cart.id partner_slug=partner.slug %}">
+                            Pay
+                        </a>
+                    {% endif %}
+                    {% if  past_cart.status == "Paid" and past_cart.pickup_partner.id == partner.id %}
+                        <a class="btn btn-primary"
+                           href="{% url 'partner_order_mark_completed' cart_id=past_cart.id partner_slug=partner.slug %}">
+                            Complete
+                        </a>
+                    {% endif %}
+                    {% if  past_cart.status != "Cancelled" and past_cart.status != "Completed" %}
+                        <a class="btn btn-danger"
+                           href="{% url 'partner_order_mark_cancelled' cart_id=past_cart.id partner_slug=partner.slug %}">
+                            Cancel
+                        </a>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+        {% include 'checkout/snippets/cart_address_info.html' with cart=past_cart %}
+        {% include 'checkout/snippets/static_cart_summary.html' with cart=past_cart %}
+    </div>
+    <div>
+        <a class="btn btn-secondary"
+           onclick="print_slip()">
+            Print Packing Slip
+        </a>
+        <script>
+            function print_slip() {
+                var printWindow = window.open("{% url 'partner_order_printout' partner_slug=partner.slug cart_id=past_cart.id %}",
+                    'Print', 'left=200, top=200, width=950, height=500, toolbar=0, resizable=0');
+
+                printWindow.addEventListener('load', function () {
+                    if (Boolean(printWindow.chrome)) {
+                        printWindow.print();
+                        setTimeout(function () {
+                            printWindow.close();
+                        }, 500);
+                    } else {
+                        printWindow.print();
+                        printWindow.close();
+                    }
+                }, true);
+                return false;
+            }
+        </script>
+
+    </div>
+    <div>
+        <table class="table">
+            <thead>
+
+            <tr>
+                <th scope="col" colspan="5">Stripe Payment Intents</th>
+            </tr>
+            <tr>
+                <th scope="col">ID</th>
+                <th scope="col">Amount Charged (stripe)</th>
+                <th scope="col">Amount Received</th>
+                <th scope="col">Stripe Status</th>
+                <th scope="col">Local Status</th>
+
+            </tr>
+            </thead>
+            {% for payment_intent in past_cart.stripepaymentintent_set.all %}
+                <tr>
+                    {% with payment_intent.get_json as pi_data %}
+                        <td>
+                            {{ payment_intent.id }}
+                        </td>
+                        <td>
+                            {{ payment_intent.amount_to_pay }} ({{ pi_data.amount }} cents)
+                        </td>
+                        <td>
+                            {{ pi_data.amount_received }} cents
+                        </td>
+                        <td>
+                            {{ pi_data.status }}
+                        </td>
+                        <td>
+                            {% if payment_intent.captured %}
+                                Confirmed
+                            {% else %}
+                                Not Received
+                            {% endif %}
+                        </td>
+                    {% endwith %}
+
+                </tr>
+            {% endfor %}
+
+        </table>
+    </div>
+{% endblock %}

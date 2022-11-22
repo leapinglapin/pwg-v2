@@ -1,0 +1,27 @@
+{% extends 'filtered_list_view.html' %}
+{% load static %}
+
+{% block title %}Past Orders{% endblock %}
+
+{% block list %}
+    <table class="table">
+        <thead>
+        <tr>
+            {% block header_columns %}
+
+            {% endblock %}
+        </tr>
+        </thead>
+        {% for entry in page %}
+            <tr>
+                {% block data_columns %}
+                    <td>entry</td>
+                {% endblock %}
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+
+{% block alternate %}
+    <p>No items in list.</p>
+{% endblock %}

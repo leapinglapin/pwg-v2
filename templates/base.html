@@ -1,0 +1,229 @@
+{% load static %}
+{% load react %}
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="{% if site %}{{ site.name }}{% else %}Comics Games and Things{% endif %}">
+
+    {% if site.partner and site.partner.favicon_path %}
+        {% include "snippets/favicons.html" with favicon_path=site.partner.favicon_path %}
+    {% else %}
+        {% include "snippets/favicons.html" with favicon_path="default" %}
+    {% endif %}
+
+    <meta name="theme-color" content="#ffffff">
+    <title> {% block title %}
+        {% if site.partner %} {{ site.partner }}{% else %} CG&T {% endif %}
+    {% endblock %}
+        - {% if site.partner %} {{ site.partner }}{% else %} CG&T {% endif %}</title>
+
+    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+            integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+            crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+            integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+            crossorigin="anonymous"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+            integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+            crossorigin="anonymous"></script>
+
+    {% block disablebootstrap %}
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+              integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+              crossorigin="anonymous">
+    {% endblock %}
+
+    <!-- Purged TailwindCSS styles -->
+    {% if site.partner.css_filename %}
+        <link rel="stylesheet" href="/static/css/{{ site.partner.css_filename }}">
+    {% else %}
+        <link href="{% static 'css/default.css' %}" rel="stylesheet">
+    {% endif %}
+
+    {% comment %}
+    <script src="https://browser.sentry-cdn.com/5.18.1/bundle.min.js"
+            integrity="sha384-4zdOhGLDdcXl+MRlpApt/Nvfe6A3AqGGBil9+lwFSkXNTv0rVx0eCyM1EaJCXS7r"
+            crossorigin="anonymous">
+
+    </script>
+    <script>
+        Sentry.init({dsn: 'https://54ca525bbe1c40dd8968949deb8cc206@o411443.ingest.sentry.io/5286633'});
+        {% if user.is_authenticated %}
+            Sentry.configureScope(function (scope) {
+                scope.setUser({"username": "{{user.username}}"});
+            })
+        {% endif %}
+    </script>
+    {% endcomment %}
+
+    <script src="https://kit.fontawesome.com/85ced30579.js" crossorigin="anonymous"></script>
+
+    <!-- Favicons -->
+
+    <meta name="theme-color" content="#563d7c">
+
+    <style>
+        .bd-placeholder-img {
+            font-size: 1.125rem;
+            text-anchor: middle;
+            -webkit-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+        }
+
+        @media (min-width: 768px) {
+            .bd-placeholder-img-lg {
+                font-size: 3.5rem;
+            }
+        }
+
+        .card-img {
+            object-fit: cover;
+        }
+
+        .table > thead > tr > th {
+            border-bottom: 1px solid #2C2F33 !important;
+            border-top: 1px solid #2C2F33 !important;
+        }
+
+        .table > tbody > tr > td {
+            border-bottom: 1px solid #2C2F33 !important;
+            border-top: 1px solid #2C2F33 !important;
+        }
+    </style>
+    {% block page_css %}
+        <link href="{% static 'css/footer.css' %}" rel="stylesheet">
+    {% endblock %}
+    {% block extrastyle %}
+    {% endblock %}
+</head>
+<body class="flex flex-col min-h-screen">
+<header class="align-self-stretch sticky top-0 z-20">
+    <nav class="navbar navbar-expand-md min-h-16">
+        <a class="navbar-brand p-0" href="/">
+            {% if site.partner.partner_logo %}
+                <img class="inline h-12" src="{{ site.partner.partner_logo.url }}" alt="logo"/>
+            {% else %}
+                <img class="inline h-12" src="{% static 'images/Logo Die Green Cropped.png' %}" alt="logo"/>
+            {% endif %}
+        </a>
+        <button class="navbar-toggler navbar-dark" type="button" data-toggle="collapse"
+                data-target="#navbarsExampleDefault"
+                aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon navbar-dark"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item">
+                    <a class="nav-link" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="/shop/">Shop All</a>
+                </li>
+                {% if not site.partner %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop/?product_type=1">Shop Files</a>
+                    </li>
+                {% endif %}
+                {% if not site.partner or site.partner.enable_mto %}
+                    <li class="nav-item">
+                        <a class="nav-link" href="/shop/?product_type=3">Made to Order</a>
+                    </li>
+                {% endif %}
+                {% if site.partner %}
+                    <li>
+                        <a class="nav-link" href="{% url 'partner_info' partner_slug=site.partner.slug %}">About</a>
+                    </li>
+                {% else %}
+                    <li>
+                        <a class="nav-link" href="{% url 'partners' %}">View Partners</a>
+                    </li>
+                {% endif %}
+            </ul>
+            <ul class="navbar-nav mr-0">
+                {% include "checkout/snippets/cart_widget.html" %}
+            </ul>
+            <ul class="navbar-nav mr-0">
+                <li class="nav-item dropdown">
+                    {% if user.is_authenticated %}
+
+                        <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown"
+                           aria-haspopup="true"
+                           aria-expanded="false">Your Account</a>
+                        <div class="dropdown-menu" aria-labelledby="dropdown01">
+                            <a class="dropdown-item" href="{% url 'account_summary' %}">Profile</a>
+                            <a class="dropdown-item" href="{% url 'past_orders' %}">Orders</a>
+                            <a class="dropdown-item" href={% url 'account_downloads' %}> Downloads </a>
+
+                            {% if user.is_staff %}
+                                <a class="dropdown-item" href="/admin">Admin</a>
+                            {% endif %}
+                            {% if perms.wagtailadmin.access_admin %}
+                                <a class="dropdown-item" href="/cms">Website CMS</a>
+                            {% endif %}
+                            {% if user.admin_of.all.exists %}
+                                <a class="dropdown-item" href="{% url 'admin_partner_list' %}">Partner</a>
+                            {% endif %}
+
+                            <a class="dropdown-item" href="{% url 'account_logout' %}">Logout</a>
+                        </div>
+
+                    {% else %}
+
+                        <a class="nav-link dropdown-toggle" href="#" id="dropdown01" data-toggle="dropdown"
+                           aria-haspopup="true"
+                           aria-expanded="false">Login</a>
+                        <div class="dropdown-menu" aria-labelledby="dropdown01">
+                            <a class="dropdown-item" href="{% url 'account_login'  %}?next={{request.get_full_path}}">Login</a>
+                            <a class="dropdown-item" href="{% url 'account_signup' %}?next={{request.get_full_path}}">Sign Up</a>
+                        </div>
+
+                    {% endif %}
+                </li>
+            </ul>
+
+        </div>
+    </nav>
+    {% include 'snippets/partner_toolbar.html' %}
+</header>
+<main role="main" class="align-self-stretch flex-grow py-3">
+    {% block main %}
+    {% endblock %}
+</main>
+<footer class="footer" style="background-color: #1c211e">
+    <div class="container">
+        <span class="text-muted">
+            <div class="col">
+                <div class="row">
+                    <div class="col">
+                         &copy; {% if site.partner %} {{ site.partner }} and {% endif %} Comics, Games, and Things LLC 2019-{% now "Y" %}. Other brands or promotional materials &copy; or
+                         &#8482; <!-- trademark --> by their respective owners.
+                    </div>
+                </div>
+                <div class="row">
+
+                    <div class="col"><a href="/privacy/">Privacy Policy</a></div>
+                    <div class="col"><a
+                            href="/terms/">Terms of Service</a> </div>
+                    <div class="col"><a href="/troubleshooting-downloads/"> Troubleshooting Downloads </a> </div>
+                    <div class="col">{% now "SHORT_DATETIME_FORMAT" %} </div>
+                </div>
+            </div>
+        </span>
+    </div>
+</footer>
+
+{% block body_js %}
+{% endblock %}
+
+<script src="{% static "js/cgt/react_index.js" %}"></script>
+{% react_print %}
+
+</body>
+</html>

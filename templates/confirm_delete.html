@@ -1,0 +1,13 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Delete {{ item_name }}?{% endblock %}
+{% block content %}
+    <h2>Are you sure you want to delete {{ item_name }}?</h2>
+    <a href="{{ confirm_url }}">
+        <button type="button" class="btn btn-danger">Yes</button>
+    </a>
+    <a href="{{ back_url }}">
+        <button type="button" class="btn btn-secondary">No</button>
+    </a>
+{% endblock %}

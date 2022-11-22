@@ -1,0 +1,47 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+{% block extrastyle %}
+
+
+{% endblock %}
+{% block content %}
+    {% include "checkout/snippets/checkout_process_bar.html" %}
+    {% include "checkout/snippets/small_cart_summary.html" %}
+    <div>
+        <form action="{% url 'checkout_payment_method' %}" method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            <h3>Payment Method</h3>
+            <br>
+            Please choose a payment method and location.
+            {% for field in payment_form %}
+                <div class="fieldWrapper">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                    {% if field.help_text %}
+                        <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <script>
+                $('label[for=id_payment_partner], select#id_payment_partner').hide();
+
+                $('#id_payment_method').on('change', function (e) {
+                    var optionSelected = $("option:selected", this);
+                    var valueSelected = this.value;
+
+                    if (valueSelected === "Pay in store") {
+                        $('label[for=id_payment_partner], select#id_payment_partner').show();
+
+                    } else {
+                        $('label[for=id_payment_partner], select#id_payment_partner').hide();
+                        $('select#id_payment_partner').find('option').attr("selected",false)
+                    }
+                });
+            </script>
+            <button type="submit" class="btn btn-primary">Next</button>
+        </form>
+    </div>
+
+{% endblock %}

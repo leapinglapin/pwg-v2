@@ -1,0 +1,22 @@
+{% extends "create_from_form.html" %}
+{% block title %}
+    {% if product %}
+        Edit {{ product.name }}
+    {% else %}
+        Create a new Product
+    {% endif %}
+{% endblock %}
+{% block extra_submit_buttons %}
+    {% if not product %}
+        {% if partner.retail_partner %}
+            <input type="submit" name="add_inv" value="Save and Add Inventory" class="btn btn-success">
+        {% endif %}
+        {% if partner.digital_partner %}
+            <input type="submit" name="add_dig" value="Save and Add Digital" class="btn btn-success">
+        {% endif %}
+        {% if partner.enable_mto %}
+            <input type="submit" name="add_mto" value="Save and Add Made to Order" class="btn btn-success">
+        {% endif %}
+    {% endif %}
+
+{% endblock %}

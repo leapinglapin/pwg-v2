@@ -1,0 +1,22 @@
+{% extends 'account/base.html' %}
+{% load static %}
+
+{% block title %}Default billing Address{% endblock %}
+{% block extrastyle %}
+    {{  form.media }}
+{% endblock %}
+{% block content %}
+    This address will be the address used to calculate tax for subscriptions
+    <br>
+    {% if address %}
+        {{ address.address }}
+        <br>
+
+    {% endif %}
+    <form action="." method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% include 'snippets/form_body.html' %}
+        <input type="submit" value="Submit">
+    </form>
+
+{% endblock %}

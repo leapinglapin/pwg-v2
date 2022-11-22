@@ -1,0 +1,193 @@
+{% extends 'container.html' %}
+{% load templatehelpers %}
+{% load static %}
+
+{% block title %}Billing History{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+
+    {% if summary_breakout %}
+        Breakout of  {{ summary_breakout.timestamp|date:"M. Y" }}
+
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Timestamp</th>
+                <th scope="col">Type</th>
+                <th scope="col">Total</th>
+                <th scope="col">Subtotal</th>
+                <th scope="col">Fees</th>
+                <th scope="col">Net</th>
+                <th scope="col">Balance</th>
+
+            </tr>
+            </thead>
+            <tr>
+                <td>
+                    {{ summary_breakout.timestamp|date:"M. Y" }}
+                </td>
+                <td>{{ summary_breakout.type }} summary</td>
+                <td>{{ summary_breakout.transaction_total }}</td>
+                <td>{{ summary_breakout.transaction_subtotal }}</td>
+                <td>{{ summary_breakout.transaction_fees }}</td>
+                <td>{{ summary_breakout.partner_cut }}</td>
+                <td>{{ summary_breakout.balance_after_apply }}</td>
+            </tr>
+        </table>
+    {% endif %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Balance</th>
+            <th scope="col">Payment or Payout</th>
+        </tr>
+        </thead>
+        <tr>
+            <td>
+                <script>
+                    function update_balance() {
+                        fetch("{%  url 'partner_update_balance' partner_slug=partner.slug %}")
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log(data)
+                                document.getElementById('balance').innerHTML = data['balance']
+                            });
+                    }
+
+                    function reset_balance() {
+                        fetch("{%  url 'partner_reset_balance' partner_slug=partner.slug %}")
+                            .then(response => response.json())
+                            .then(data => {
+                                console.log(data)
+                                document.getElementById('balance').innerHTML = data['balance']
+                                location.reload()
+                            });
+                    }
+                </script>
+
+                <span id="balance">{{ balance }}</span>
+                <button class="btn btn-primary" onclick="update_balance()">Update</button>
+                <button class="btn btn-danger" onclick="reset_balance()">Reset</button>
+
+            </td>
+            <td>
+                {% if user.is_staff %}
+                    <form action="." method="post">
+                        {% include 'snippets/form_body.html' with form=staff_payment_log_form %}
+                        <button type="submit" class="btn btn-danger">Log Payment</button>
+                    </form>
+
+                {% else %}
+                    <p>
+                        To request a payout, please contact nsh@comicsgamesandthings.com or ask in your channel in
+                        discord.
+                    </p>
+                {% endif %}
+            </td>
+        </tr>
+    </table>
+    <div>
+        Please ask for a CSV of your transaction data if you need one.
+        {% comment %}
+        <a class="btn btn-primary" href="{% url 'billing_csv_export' partner_slug=partner.slug %}">
+            Download all as CSV
+        </a>
+        <a class="btn btn-primary" href="{% url 'billing_csv_export_sales_only' partner_slug=partner.slug %}">
+            Download sales only as CSV
+        </a>
+        {% endcomment %}
+    </div>
+    {% include 'snippets/page_numbers.html' %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Timestamp</th>
+            <th scope="col">Type</th>
+            <th scope="col">Description</th>
+            <th scope="col">Total</th>
+            <th scope="col">Subtotal</th>
+            <th scope="col">Fees</th>
+            <th scope="col">Net</th>
+            <th scope="col">Balance</th>
+
+        </tr>
+        </thead>
+        {% for transaction in page %}
+            {% if transaction.is_summary %}
+                <tr>
+                    <td>
+                        <a href="{% url 'summary_breakout' partner_slug=partner.slug summary_id=transaction.id %}">
+                            {{ transaction.timestamp|date:"M. Y" }}
+                        </a>
+                    </td>
+                    <td>{{ transaction.type }} summary</td>
+                    <td> Multiple charges</td>
+                    <td>{{ transaction.transaction_total }}</td>
+                    <td>{{ transaction.transaction_subtotal }}</td>
+                    <td>{{ transaction.transaction_fees }}</td>
+                    <td>{{ transaction.partner_cut }}</td>
+                    <td>{{ transaction.balance_after_apply }}</td>
+                </tr>
+            {% else %}
+                <tr>
+                    {% with customerandemail=transaction|customer_for_transaction %}
+
+                        <td>
+                            {{ transaction.timestamp }}</td>
+                        <td>
+                            {% if transaction.type == transaction.PURCHASE or transaction.type == transaction.SUBSCRIPTION %}
+                                {% with cart=transaction.id|cart_for_transaction %}
+                                    {% if cart %}
+                                        <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=cart.id %}">
+                                            {{ transaction.type }}
+
+                                        </a>
+                                    {% else %}
+                                        {{ transaction.type }}
+                                    {% endif %}
+                                {% endwith %}
+                            {% elif transaction.type == transaction.PLATFORM_CHARGE and customerandemail.0 %}
+                                <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=customerandemail.0.id %}">
+                                    {{ transaction.type }}
+                                </a>
+                            {% else %}
+                                {{ transaction.type }}
+
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% with cart=transaction.id|cart_for_transaction %}
+                                {% if cart %}
+                                    <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=cart.id %}">
+                                        Order {{ cart.id }}
+                                    </a> for
+                                {% endif %}
+                            {% endwith %}
+                            {% if customerandemail.0 %}
+                                <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=customerandemail.0.id %}">
+                                    {{ customerandemail.0 }}
+                                </a>
+                            {% elif customerandemail.1 %}
+                                {{ customerandemail.1 }}
+                            {% endif %}
+                            {% if transaction.comments %}
+                                {{ transaction.comments }}
+                            {% endif %}
+                        </td>
+                        <td>{{ transaction.transaction_total }}</td>
+                        <td>{{ transaction.transaction_subtotal }}</td>
+                        <td>{{ transaction.transaction_fees }}</td>
+                        <td>{{ transaction.partner_cut }}</td>
+                        <td>{{ transaction.balance_after_apply }}</td>
+                    {% endwith %}
+                </tr>
+            {% endif %}
+        {% endfor %}
+    </table>
+    {% include 'snippets/page_numbers.html' %}
+
+{% endblock %}

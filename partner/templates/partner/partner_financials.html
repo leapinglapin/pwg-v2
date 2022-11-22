@@ -1,0 +1,32 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ partner.name }} Admin{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <h1>{{ partner.name }}</h1>
+    <p>This is an approximate gross. It's the cost of the item at submit * quantity.
+        No fees are removed from this number.</p>
+    <table>
+        <tr>
+            <th>Time Period</th>
+            <th>Gross</th>
+        </tr>
+        <tr>
+            <td>All Time</td>
+            <td>${{ all_time }}</td>
+        </tr>
+        <tr>
+            <td>Month to Date</td>
+            <td>${{ month_to_date }}</td>
+        </tr>
+        <tr>
+            <td>4 Weeks</td>
+            <td>${{ four_weeks }}</td>
+        </tr>
+    </table>
+{% endblock %}

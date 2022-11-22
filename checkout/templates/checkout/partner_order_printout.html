@@ -1,0 +1,178 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Packing Slip</title>
+
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+        <meta name="description" content="">
+        <meta name="author" content="Comics Games and Things">
+
+        <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
+                integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+                crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
+                integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
+                crossorigin="anonymous"></script>
+        <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/js/bootstrap.min.js"
+                integrity="sha384-wfSDF2E50Y2D1uUdj0O3uMBJnjuUD4Ih7YwaYd1iqfktj0Uod8GCExl3Og8ifwB6"
+                crossorigin="anonymous"></script>
+
+        <!-- Bootstrap core CSS -->
+        <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
+              integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
+              crossorigin="anonymous">
+
+        <!-- Purged TailwindCSS styles -->
+        {% if site.partner.css_filename %}
+            <link rel="stylesheet" href="/static/css/{{ site.partner.css_filename }}">
+        {% else %}
+            <link href="{% static 'css/default.css' %}" rel="stylesheet">
+        {% endif %}
+
+        {% comment %}
+    <script src="https://browser.sentry-cdn.com/5.18.1/bundle.min.js"
+            integrity="sha384-4zdOhGLDdcXl+MRlpApt/Nvfe6A3AqGGBil9+lwFSkXNTv0rVx0eCyM1EaJCXS7r"
+            crossorigin="anonymous">
+
+    </script>
+    <script>
+        Sentry.init({dsn: 'https://54ca525bbe1c40dd8968949deb8cc206@o411443.ingest.sentry.io/5286633'});
+        {% if user.is_authenticated %}
+            Sentry.configureScope(function (scope) {
+                scope.setUser({"username": "{{user.username}}"});
+            })
+        {% endif %}
+    </script>
+    {% endcomment %}
+
+        <script src="https://kit.fontawesome.com/85ced30579.js" crossorigin="anonymous"></script>
+    </head>
+<body>
+<div class="col">
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Comics, Games, and Things</th>
+            <th scope="col">Username</th>
+            <th scope="col">Email</th>
+            <th scope="col">Order ID</th>
+
+        </tr>
+        </thead>
+        <tr>
+            <td>
+                <img class="inline h-12"
+                     src="{% static 'images/Logo Die Green Cropped.png' %}" alt="logo"
+                />
+            </td>
+
+            <td>
+                {{ past_cart.owner.username }}
+            </td>
+            <td>
+                {% if past_cart.owner %}
+                    {{ past_cart.owner.email }}
+                {% else %}
+                    {{ past_cart.email }}
+                {% endif %}
+            </td>
+            <td>
+                {{ past_cart.id }}
+            </td>
+        </tr>
+    </table>
+
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Date</th>
+            <th scope="col">Items</th>
+            <th scope="col">Payment Location</th>
+            <th scope="col">Shipping or Pickup</th>
+            <th scope="col">Status</th>
+        </tr>
+        </thead>
+        <tr>
+            <td>
+                {{ past_cart.date_submitted }}
+            </td>
+            <td>{{ past_cart.num_items }}</td>
+            <td>
+                {% if past_cart.payment_partner %}
+                    {% if past_cart.at_pos %} Placed in-store at
+                    {% else %} Placed online with
+                    {% endif %}
+                    {{ past_cart.payment_partner }}
+                {% else %}
+                    Online
+                {% endif %}
+            </td>
+            <td>
+                {{ past_cart.delivery_method }}
+            </td>
+            <td>
+                {{ past_cart.status }}
+            </td>
+        </tr>
+    </table>
+    {% if past_cart.is_shipping_required %}
+        <table class="table">
+            <thead>
+            {% if past_cart.delivery_method == past_cart.PICKUP_ALL %}
+                <tr>
+                    <th>
+                        Pickup Location
+                    </th>
+                </tr>
+                <tr>
+                    <td>{{ past_cart.pickup_partner }}</td>
+                </tr>
+            {% elif past_cart.delivery_method == past_cart.SHIP_ALL %}
+                <tr>
+                    <th>
+                        Shipping Address
+                    </th>
+                    <th>Tracking Information</th>
+                </tr>
+                <tr>
+                    <td>
+                        {% if past_cart.delivery_address %}
+                            OLD SYSTEM:
+                            {{ past_cart.delivery_name }} <br>
+                            {% if past_cart.delivery_apartment %}
+                                {{ past_cart.delivery_apartment }} <br>
+                            {% endif %}
+                            {{ past_cart.delivery_address }} <br>
+                        {% else %}
+                            {{ past_cart.shipping_address }}
+                        {% endif %}
+
+                    </td>
+                    <td>
+                        {{ past_cart.tracking_number }}
+                    </td>
+                </tr>
+            {% endif %}
+        </table>
+    {% endif %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th>
+                Billing Address
+            </th>
+        </tr>
+        <tr>
+            <td>{{ past_cart.get_tax_address }}</td>
+        </tr>
+    </table>
+    {% include 'checkout/snippets/static_cart_summary.html' with cart=past_cart %}
+</div>
+</body>
+</html>

@@ -1,0 +1,71 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Partner List{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <div class="col">
+        <h2>Retail Partners</h2>
+        <p>
+            Our retail partners gain access to our catalog of products, the CG&T marketplace, inventory management
+            features,
+            and optionally, a custom-branded website. To become a retail partner,
+            please <a href="mailto:shop@comicsgamesandthings.com">email us</a>.
+        </p>
+    </div>
+    <div class="col">
+        {% for partner in retail_list %}
+            <div class="row mb-3">
+                <div class="col">
+                    <div class="card">
+                        <div class="row no-gutters">
+                            <div class="card-body">
+
+                                <h3>
+                                    <a href={% url 'partner_info' partner_slug=partner|slugify %}>{{ partner }}</a>
+                                </h3>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    <div class="col">
+        <h2>Digital Partners</h2>
+        <p>
+            Our digital partners get access to the CG&T marketplace, Patreon and Kickstarter Integration, and anti-piracy features to protect their work.
+            Optionally, a custom-branded website can be made with only the partner's products and a shared library
+            across both websites. Partners must abide by the <a href="/terms-and-conditions-for-partnership/">Terms and Conditions for Partnership</a>.
+            <br /> 
+            Our Patreon system works by importing pledges from the Patreon API and automatically granting content to eligible Patrons based on configured 
+            release packs created by the digital partner on the CG&T platform. This pledge information can also be used to automatically grant patron discounts
+            in the CG&T store. Our Patreon integration fees are $0.10 USD per patron per release.
+            <br />
+            Digital Partners can upload their products to the CG&T store and configure a variety of settings, including separate dates for granting
+            access to patrons and for listing items for sale. For store sales we charge 4%, and an additional 3% + 50c to cover credit card fees.
+            <br />
+            To inquire about becoming a digital partner, please <a href="mailto:shop@comicsgamesandthings.com">email us</a>. <br>
+        </p>
+    </div>
+    {% for partner in digital_list %}
+        <div class="row mb-3">
+            <div class="col">
+                <div class="card">
+                    <div class="row no-gutters">
+                        <div class="card-body">
+
+                            <h3>
+                                <a href={% url 'partner_info' partner_slug=partner|slugify %}>{{ partner }}</a>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+{% endblock %}

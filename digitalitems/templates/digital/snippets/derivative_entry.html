@@ -1,0 +1,16 @@
+{% load react %}
+{% load templatehelpers %}
+<tr>
+    <td>
+        <a href="{%  url 'product_detail' item.product.slug %}">{{ item.product.name }}</a>
+    </td>
+    <td>
+        {% if item|purchased:user %}
+            Owned
+        {% else %}
+            {% include 'shop/snippets/discounted_price.html' %}
+                {% react_render component="AddToCartButton" props=item %}
+        {% endif %}
+    </td>
+</tr>
+

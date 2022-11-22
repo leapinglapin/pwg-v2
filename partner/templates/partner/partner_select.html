@@ -1,0 +1,17 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Partner List{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    You are an administrator of the following partners:
+    <ul>
+        {% for partner in partner_list %}
+            <li><a href={% url 'partner_homepage' partner_slug=partner|slugify %}>{{ partner }}</a></li>
+        {% endfor %}
+    </ul>
+{% endblock %}

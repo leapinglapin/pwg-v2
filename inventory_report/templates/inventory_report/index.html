@@ -1,0 +1,16 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Inventory Reports{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+
+    <br>
+    {% for report in reports %}
+        <a href="{% url 'report' partner_slug=partner.slug report_id=report.id %}">{{ report }}</a>
+    {% endfor %}
+
+
+{% endblock %}

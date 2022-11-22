@@ -1,0 +1,37 @@
+venv
+*.pyc
+/static
+.env
+*.sqlite3
+
+.idea/
+.vscode/
+
+node_modules/
+
+#Ignore compiled javascript files
+/openCGaT/static/js/cgt/
+
+#Ignore uploaded files
+/media/**
+
+# Yarn 2
+.yarn/*
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+
+# Ignore local dev tools version configurations
+# since they can contain computer specific information
+.python-version
+.nvmrc
+m1_mac_env_setup.sh
+/yaml/shopcgt-secrets
+
+
+# Ignore text reports
+/reports/*
+
+

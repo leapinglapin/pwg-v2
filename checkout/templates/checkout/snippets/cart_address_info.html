@@ -1,0 +1,82 @@
+{% if cart.is_shipping_required %}
+    <table class="table">
+        <thead>
+        {% if cart.delivery_method == cart.PICKUP_ALL %}
+            <tr>
+                <th>
+                    Pickup Location
+                </th>
+                <th>
+                    Status
+                </th>
+            </tr>
+            <tr>
+                <td>
+                    {{ cart.pickup_partner }}
+                </td>
+                <td>
+                    {% if cart.ready_for_pickup %}
+                        Ready for pickup!
+                    {% else %}
+                        {% if cart.pickup_partner == partner %}
+                            <a class="btn btn-success"
+                               href="{% url 'partner_order_ready_for_pickup' partner_slug=partner.slug cart_id=cart.id %}">
+                                Ready for Pickup
+                            </a>
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+        {% elif cart.delivery_method == cart.SHIP_ALL %}
+            <tr>
+                <th>
+                    Shipping Address
+                </th>
+                <th>Tracking Information</th>
+            </tr>
+            <tr>
+                <td>
+                    {% if cart.delivery_addresss %}
+                        {{ cart.delivery_name }} <br>
+                        {% if cart.delivery_apartment %}
+                            {{ cart.delivery_apartment }} <br>
+                        {% endif %}
+                        {{ cart.delivery_address }} <br>
+                    {% else %}
+                        {{ cart.shipping_address.first_name }} {{ cart.shipping_address.last_name }}<br>
+                        {{ cart.shipping_address.line1 }} <br>
+                        {{ cart.shipping_address.line2 }} {% if cart.shipping_address.line2 %}<br> {% endif %}
+                        {{ cart.shipping_address.line3 }} {% if cart.shipping_address.line3 %}<br> {% endif %}
+                        {{ cart.shipping_address.line4 }}, {{ cart.shipping_address.state }}
+                        {{ cart.shipping_address.postcode }}
+
+
+                    {% endif %}
+
+                </td>
+                <td>
+                    {{ cart.carrier }}
+                    {{ cart.tracking_number }}
+                    {% if partner %}
+                        <form action="." method="post" enctype="multipart/form-data">
+                            {% csrf_token %}
+                            {% include 'snippets/form_body.html' %}
+                            <button type="submit" class="btn btn-primary">Submit</button>
+                        </form>
+                    {% endif %}
+                </td>
+            </tr>
+        {% endif %}
+    </table>
+{% endif %}
+<table class="table">
+    <thead>
+    <tr>
+        <th>
+            Billing Address
+        </th>
+    </tr>
+    <tr>
+        <td>{{ cart.get_tax_address }}</td>
+    </tr>
+</table>

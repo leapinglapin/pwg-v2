@@ -1,0 +1,10 @@
+{% load templatehelpers %}
+<label for="{{ field.auto_id }}">{{ field.label }}:</label>
+<select id="{{ field.auto_id }}" name="{{ field.name }}"
+        class="select-dropdown"
+        value="{{ field|field_value_or_default }}">
+    {% for choiceValue, choiceText in field.field.choices %}
+        <option value="{{ choiceValue.value }}"
+                {% if choiceValue.value|as_str == field|field_value_or_default|as_str %}selected="selected"{% endif %}>{{ choiceText }}</option>
+    {% endfor %}
+</select>

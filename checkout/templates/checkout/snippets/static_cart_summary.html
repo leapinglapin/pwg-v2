@@ -1,0 +1,153 @@
+{% load templatehelpers %}
+{% if cart.lines.all %}
+    {% with cart.not_only_digital as extra_col %}
+        <table class="table checkout-table">
+            <thead>
+            <tr>
+                <th scope="col">Item</th>
+                <th scope="col">Type</th>
+                <th scope="col">Seller</th>
+                {% if extra_col %}
+                    <th scope="col">Status</th>
+                {% endif %}
+                <th scope="col">Quantity</th>
+                <th scope="col">Price</th>
+                <th scope="col">Subtotal</th>
+            </tr>
+            </thead>
+            {% for line in cart.lines.all %}
+                <tr>
+                    <td>
+                        <a href="{% site_url cart %}{% url 'product_detail' product_slug=line.item.product.slug %}">
+                            {{ line.item.product.name }}
+                        </a>
+                        {% if line.item.description %}
+                            <br>
+                            {{ line.item.description }}
+                        {% endif %}
+                    </td>
+                    <td>{% include 'shop/snippets/item_type_icon.html' with item=line.item %}</td>
+                    <td>{{ line.item.partner }}</td>
+                    {% if extra_col %}
+                        <td>
+                            <text>{{ line.status_text|linebreaks }}</text>
+                        </td>
+                    {% endif %}
+                    <td>{{ line.quantity }}</td>
+
+                    <td>{{ line.get_price }}
+                        {% if line.get_price != line.get_pre_discount_price %}
+                            <span style="text-decoration: line-through;">{{ line.get_pre_discount_price }}</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ line.get_subtotal }}
+                        {% if line.get_price != line.get_pre_discount_price %}
+                            <span style="text-decoration: line-through;">{{ line.get_pre_discount_subtotal }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                {% if cart.not_only_digital %}
+                    <td></td>
+                {% endif %}
+                <td></td>
+                <td>Subtotal:</td>
+                <td>{{ cart.get_total_subtotal }}</td>
+            </tr>
+            {% if cart.is_shipping_required %}
+
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    {% if extra_col %}
+                        <td></td>
+                    {% endif %}
+                    <td></td>
+                    <td>Shipping:</td>
+                    <td>
+                        {% if cart.final_ship %}
+                            {{ cart.final_ship }}
+                        {% else %}
+                            {% if cart.can_get_shipping %}
+                                {{ cart.get_shipping }}
+                            {% else %}
+                                Need address
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endif %}
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                {% if extra_col %}
+                    <td></td>
+                {% endif %}
+                <td></td>
+                <td>Tax:</td>
+                <td>
+                    {% if cart.final_tax %}
+                        {{ cart.final_tax }}
+                    {% else %}
+                        {% if cart.can_get_tax %}
+                            {{ cart.get_tax }}
+                        {% else %}
+                            Need address
+                        {% endif %}
+                    {% endif %}
+                </td>
+            </tr>
+            <tr>
+                <td></td>
+                <td></td>
+                <td></td>
+                {% if extra_col %}
+                    <td></td>
+                {% endif %}
+                <td></td>
+                {% if cart.final_total %}
+                    <td>Total:</td>
+                    <td>{{ cart.final_total }}</td>
+                {% else %}
+                    <td>Estimated total:</td>
+                    <td>{{ cart.get_estimate_total }}</td>
+
+                {% endif %}
+            </tr>
+            {% if cart.total_paid %}
+                <tr>
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                    {% if extra_col %}
+                        <td></td>
+                    {% endif %}
+                    <td></td>
+                    <td>Amount Paid:</td>
+                    <td>{{ cart.total_paid }}</td>
+                </tr>
+            {% endif %}
+            {% if cart.discount_code %}
+                <tr>
+                    <td>Discount code applied: {{ cart.discount_code.code }}</td>
+                    <td></td>
+                    <td></td>
+                    {% if extra_col %}
+                        <td></td>
+                    {% endif %}
+                    <td></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            {% endif %}
+        </table>
+    {% endwith %}
+{% else %}
+    <p> Items you add to your cart will appear here.</p>
+{% endif %}

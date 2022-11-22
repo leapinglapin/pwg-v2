@@ -1,0 +1,14 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block main %}
+    <div class="container">
+        {% block body %} {#  For social-auth #}
+
+            {% block content %}
+            {% endblock %}
+        {% endblock %}
+    </div>
+{% endblock %}
+{% block extra_body %} {#  For social-auth #}
+{% endblock %}

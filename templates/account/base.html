@@ -1,0 +1,44 @@
+{% extends "container.html" %}
+{% block body %}
+
+    {% if messages %}
+        <div>
+            <strong>Messages:</strong>
+            <ul>
+                {% for message in messages %}
+                    <li>{{ message }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    {% endif %}
+
+    <div>
+        {% if user.is_authenticated %}
+            <a class="btn btn-primary" href="{% url 'socialaccount_connections' %}">Manage 3rd party Accounts</a>
+
+            <a class="btn btn-primary" href={% url 'account_downloads' %}> Your account's Downloads </a>
+            <a class="btn btn-primary" href={% url 'user_pledges' %}> Patreon Pledges </a>
+
+            {%  comment %}
+            <a class="btn btn-primary" href={% url 'saved_cards' %}> Saved Cards </a>
+            <a class="btn btn-primary" href={% url 'default_address' %}> Default Address </a>
+            {% endcomment %}
+
+            <a class="btn btn-warning" href="{% url 'account_email' %}">Manage Email Addresses</a>
+            {% if user.has_usable_password %}
+                <a class="btn btn-warning" href="{% url 'account_change_password' %}"> Change Password </a>
+            {% else %}
+                <a class="btn btn-warning" href="{% url 'account_set_password' %}"> Set Password </a>
+            {% endif %}
+            <a class="btn btn-danger" href="{% url 'account_logout' %}">Sign Out</a>
+
+        {% else %}
+            <a href="{% url 'account_login' %}">Sign In</a>
+            <a href="{% url 'account_signup' %}">Sign Up</a>
+        {% endif %}
+    </div>
+    {% block content %}
+    {% endblock %}
+{% endblock %}
+{% block extra_body %}
+{% endblock %}

@@ -1,0 +1,43 @@
+{% extends 'filtered_table_list_view.html' %}
+
+{% block header_columns %}
+    <th scope="col">ID</th>
+    <th scope="col">User</th>
+    <th scope="col">Date</th>
+    <th scope="col">Items</th>
+    <th scope="col">Total</th>
+    <th scope="col">Location</th>
+    <th scope="col">Status</th>
+{% endblock %}
+{% block data_columns %}
+
+    <td>
+        <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=entry.id %}">
+            {{ entry.id }}
+        </a>
+    </td>
+    <td>
+        {% if entry.owner %}
+            <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=entry.owner.id %}">
+                {{ entry.owner.username }} ({{ entry.owner.email }})
+            </a>
+        {% else %}
+            {{ entry.email }}
+        {% endif %}
+    </td>
+    <td>
+        <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=entry.id %}">
+            {{ entry.date_submitted }}
+        </a>
+    </td>
+    <td>{{ entry.num_items }}</td>
+    <td>{{ entry.final_total }}</td>
+    <td>
+        {% if entry.at_pos %}
+            {{ entry.payment_partner }}
+        {% else %}
+            Online
+        {% endif %}
+    </td>
+    <td>{{ entry.status }}</td>
+{% endblock %}

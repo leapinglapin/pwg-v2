@@ -1,0 +1,21 @@
+{% for pack in campaign.packs.all|dictsortreversed:"pledges_to" %}
+    <div class="row mb-3">
+        <div class="col">
+            <div class="card">
+                <div class="row no-gutters">
+                    <div class="col-md-4">
+                        <img class='card-img img-thumbnail ' src="{{ pack.pack_image.image.url }}"
+                             alt="{{ pack.pack_image.alt_text }}"/>
+                    </div>
+                    <div class="col-md-8">
+                        <div class="card-body">
+                            <a href="{% url 'view_pack' campaign_slug=campaign.slug pack_id=pack.id %}">
+                                <h3>{{ pack.name }}</h3></a>
+                            {% include 'subscription/snippets/pack_info.html' %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endfor %}

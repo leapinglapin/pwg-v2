@@ -1,0 +1,32 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+{% block extrastyle %}
+    {{ form.media }}
+
+{% endblock %}
+{% block content %}
+    {% include "checkout/snippets/checkout_process_bar.html" %}
+    {% include "checkout/snippets/small_cart_summary.html" %}
+    {% if cart.tax_error %}
+        <b>Our tax processor had an issue with your address. Please ensure it is formatted correctly, or try anther
+            local address in the same tax region</b>
+    {% endif %}
+    <div>
+        <h2>Where should we ship your order?</h2>
+        <form action="." method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="fieldWrapper">
+                    {{ field.errors }}
+                    {{ field.label_tag }} {{ field }}
+                    {% if field.help_text %}
+                        <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" class="btn btn-primary">Next</button>
+        </form>
+    </div>
+{% endblock %}

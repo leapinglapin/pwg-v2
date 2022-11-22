@@ -1,0 +1,270 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}Customer Details{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Username</th>
+            <th scope="col">First Name</th>
+            <th scope="col">Last Name</th>
+            <th scope="col">Last Login</th>
+            <th scope="col">Date Joined</th>
+            <th scope="col">Status</th>
+        </tr>
+        </thead>
+        <tr>
+            <td>{{ customer.username }}</td>
+            <td>{{ customer.first_name }}</td>
+            <td>{{ customer.last_name }}</td>
+            <td>{{ customer.last_login }}</td>
+            <td>{{ customer.date_joined }}</td>
+            <td>
+                {% if customer.is_active %}
+                    Unbanned
+                {% else %}
+                    Banned
+                {% endif %}
+                <form action="." method="post" enctype="multipart/form-data">
+                    {% csrf_token %}
+                    {% for field in banform %}
+                        {{ field.label_tag }} {{ field }}
+                        <p class="help"> Uncheck active and click ban to ban this user </p>
+                    {% endfor %}
+                    <input class="btn btn-danger" type="submit" value="Ban">
+                </form>
+            </td>
+        </tr>
+
+    </table>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Email</th>
+            <th scope="col">Verified?</th>
+            <th scope="col">Primary</th>
+        </tr>
+        </thead>
+        {% for emailaddress in customer.emailaddress_set.all %}
+            <tr>
+
+                <td>{{ emailaddress.email }}</td>
+                <td>
+                    {% if emailaddress.verified %}
+                        <span class="verified">Verified</span>
+                    {% else %}
+                        <span class="unverified">Unverified</span>
+                    {% endif %}
+                </td>
+                <td>{% if emailaddress.primary %}<span class="primary">Primary</span>{% endif %}</td>
+                {% if forloop.first %}
+
+                {% endif %}
+            </tr>
+        {% endfor %}
+    </table>
+
+    <h2> Orders </h2>
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">ID</th>
+
+            <th scope="col">Date</th>
+            <th scope="col">Items</th>
+            <th scope="col">Location</th>
+            <th scope="col">Status</th>
+        </tr>
+        </thead>
+        {% for order in orders %}
+            <tr>
+                <td>
+                    {% if not admin %}
+                        <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=order.id %}">
+                            {{ order.id }}
+                        </a>
+                    {% else %}
+                        {{ order.id }}
+                    {% endif %}
+                </td>
+                <td>
+                    {% if not admin %}
+                        <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=order.id %}">
+                            {{ order.date_submitted }}
+                        </a>
+                    {% else %}
+                        {{ order.date_submitted }}
+                    {% endif %}
+                </td>
+                <td>{{ order.num_items }}</td>
+                <td>
+                    {% if order.at_pos %}
+                        {{ order.payment_partner }}
+                    {% else %}
+                        Online
+                    {% endif %}
+                </td>
+                <td>{{ order.status }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    {% if campaigns %}
+        <h2>Campaign Pledges</h2>
+    {% endif %}
+    {% for campaign, data in campaigns.items %}
+        <h3> {{ campaign }} Pledges</h3>
+        {% if data.member_id.id %}
+            Member ID found
+            {% if not admin %}
+                <a class="btn btn-success"
+                   href="{% url 'patreon_member_raw_data' partner_slug=partner.slug member_id=data.member_id.id %}">
+                    View Raw Data </a>
+
+                <button class="btn btn-success" onclick="reload_from_patreon(this.id)" id="{{ data.member_id.id }}">
+                    Reload from patreon
+                </button>
+            {% endif %}
+        {% else %}
+            Member ID not found
+        {% endif %}
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Date (Patreon Date)</th>
+                <th scope="col">Payment Status</th>
+                <th scope="col">Type</th>
+                <th scope="col">Tier</th>
+                <th scope="col">Qualifying for packs:</th>
+
+            </tr>
+            </thead>
+            {% for pledge in data.patreon_pledges %}
+                <tr>
+
+                    <td>{{ pledge.date }} ({{ pledge.patreon_timestamp }})</td>
+
+                    <td>
+                        {% if pledge.ignore %}
+                            Ignored, but normally:
+                        {% endif %}
+                        {% if pledge.payment_status == None %}
+                            {{ pledge.pledge_payment_status }}
+                        {% else %}
+                            {{ pledge.payment_status }}
+                        {% endif %}
+
+                    </td>
+                    <td>{{ pledge.type }}</td>
+                    <td>{{ pledge.tier.tier_name }}</td>
+                    <td>
+                        {% for pack in pledge.qualified_for_packs.all %}
+                            {{ pack.name }}<br>
+                        {% endfor %}
+                    </td>
+                </tr>
+
+            {% endfor %}
+        </table>
+        {% if not admin %}
+            <div class="row">
+                <div class="col">
+                    <form action="{% url 'grant_manual_access' partner_slug=partner.slug customer_id=customer.id %}"
+                          method="post"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% include 'snippets/form_body.html' with form=grant_manual_access_form %}
+                        <input class="btn btn-warning" type="submit" value="Grant manual access">
+                    </form>
+                </div>
+
+                <div class="col">
+                    <form action="{% url 'revoke_manual_access' partner_slug=partner.slug customer_id=customer.id %}"
+                          method="post"
+                          enctype="multipart/form-data">
+                        {% csrf_token %}
+                        {% include 'snippets/form_body.html' with form=revoke_manual_access_form %}
+
+                        <input class="btn btn-danger" type="submit" value="Revoke manual access">
+                    </form>
+                </div>
+
+            </div>
+        {% endif %}
+    {% endfor %}
+    <script>
+        function refresh_downloads(id) {
+            let button = document.getElementById(id);
+            console.log(button)
+            button.disabled = true;
+            button.setAttribute("disabled", "true"); //Why doesn't this disable
+            button.removeAttribute("onclick")
+            button.classList.add('btn-secondary')
+            button.classList.remove('btn-success')
+            console.log(button)
+
+            fetch("{% url 'refresh_downloads' user_id=customer.id %}")
+                .then(response => {
+                    location.reload();
+                });
+        }
+
+        function reload_from_patreon(id) {
+            let button = document.getElementById(id);
+            console.log(button)
+            button.disabled = true;
+            button.setAttribute("disabled", "true"); //Why doesn't this disable
+            button.removeAttribute("onclick")
+            button.classList.add('btn-secondary')
+            button.classList.remove('btn-success')
+            console.log(button)
+            {% if not admin %}
+
+                fetch("/partner/{{ partner.slug }}/subscription/patreon/view_raw_data/".concat(
+                    id).concat("/"))
+                    .then(response => {
+                        location.reload();
+                    });
+            {% endif %}
+        }
+    </script>
+    <h2> Downloads <a class="btn btn-success" onclick="refresh_downloads(this.id)" id="refresh"> Refresh </a></h2>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Name</th>
+        </tr>
+        </thead>
+        {% for item in items %}
+            <tr>
+
+                <td>{{ item.product.name }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+    <h2> Token Balances <a class="btn btn-success" onclick="refresh_downloads(this.id)" id="refresh"> Refresh </a></h2>
+
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">Token</th>
+            <th scope="col">Balance</th>
+
+        </tr>
+        </thead>
+        {% for token in user.token_balances.all %}
+            <tr>
+                <td>{{ token.name }}</td>
+                <td>{{ token.balance }}</td>
+            </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+

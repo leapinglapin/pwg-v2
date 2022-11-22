@@ -1,0 +1,29 @@
+{% extends 'filtered_table_list_view.html' %}
+{% load static %}
+
+{% block title %}All orders (for tax){% endblock %}
+
+{% block header_columns %}
+    <th scope="col">ID</th>
+    <th scope="col">User</th>
+    <th scope="col">Date</th>
+    <th scope="col">Sales Tax Charged</th>
+    <th scope="col">Total Tax Charged</th>
+    <th scope="col">Destination Address</th>
+    <th scope="col">Status</th>
+{% endblock %}
+
+{% block data_columns %}
+
+    <td>
+        <a href="{% url 'past_order_details' cart_id=entry.id %}">
+            {{ entry.id }}
+        </a>
+    </td>
+    <td>{{ entry.owner.username }} ({{ entry.owner.email }})</td>
+    <td>{{ entry.date_submitted }}</td>
+    <td>{{ entry.final_tax }}</td>
+    <td>{{ entry.final_total }}</td>
+    <td>{{ entry.get_tax_address }}</td>
+    <td>{{ entry.status }}</td>
+{% endblock %}

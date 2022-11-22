@@ -1,0 +1,79 @@
+{% if user in partner.administrators.all %}
+    <div class="nav nav-scroller bg-white shadow-sm min-h-10">
+        <nav class="nav-item">
+            <span class="nav-link disabled"><strong>Partner Menu:</strong></span>
+        </nav>
+        <nav class="nav-item">
+            <a class="nav-link" href="{% url 'manage_products' partner_slug=partner|slugify %}">Manage Products</a>
+        </nav>
+        <nav class="nav-item">
+            <a class="nav-link" href="{% url 'create_new_product' partner_slug=partner|slugify %}">Create New
+                Products</a>
+        </nav>
+        {% if partner.digital_partner %}
+            <nav class="nav-item">
+                <a class="nav-link" href="{% url 'manage_pack_products' partner_slug=partner|slugify %}">Packs</a>
+            </nav>
+        {% endif %}
+        {% if partner.crowdfunding_features %}
+
+            <nav class="nav-item">
+                <a class="nav-link" href="{% url 'manage_lists' partner_slug=partner|slugify %}">Lists</a>
+            </nav>
+        {% endif %}
+        {% if partner.retail_partner %}
+            <nav class="nav-item">
+                <a class="nav-link" href="{% url 'intake_home' partner_slug=partner|slugify %}">Intake</a>
+            </nav>
+            <nav class="nav-item">
+                <a class="nav-link" href="{% url 'purchase_orders' partner_slug=partner|slugify %}">Purchase Orders</a>
+            </nav>
+            <nav class="nav-item">
+                <a class="nav-link" href="{% url 'distributors' partner_slug=partner|slugify %}">Distributors</a>
+            </nav>
+            <nav class="nav-item">
+                <a class="nav-link" href="{% url 'pricing_rules' partner_slug=partner|slugify %}">Pricing Rules</a>
+            </nav>
+            <nav class="nav-item">
+                <a class="nav-link" href="{% url 'backorders' partner_slug=partner|slugify %}">Backorders</a>
+            </nav>
+            <nav class="nav-item">
+                <a class="nav-link" href="{% url 'pos' partner_slug=partner|slugify %}">
+                    POS
+                </a>
+            </nav>
+        {% endif %}
+
+        {% if partner.campaigns.count > 0 %}
+            <nav class="nav-item">
+                <a class="nav-link"
+                   href="{% url 'manage_subscriptions' partner_slug=partner|slugify %}">Subscriptions</a>
+            </nav>
+        {% endif %}
+        <nav class="nav-item">
+            <a class="nav-link" href="{% url 'manage_tokens' partner_slug=partner|slugify %}">Tokens</a>
+        </nav>
+        <nav class="nav-item">
+
+            <a class="nav-link" href="{% url 'partner_billing' partner_slug=partner|slugify %}">Billing</a>
+        </nav>
+        <nav class="nav-item">
+            <a class="nav-link" href="{% url 'partner_orders' partner_slug=partner|slugify %}">Orders</a>
+        </nav>
+        <nav class="nav-item">
+            <a class="nav-link" href="{% url 'partner_customer_list' partner_slug=partner|slugify %}">Customers</a>
+        </nav>
+        <nav class="nav-item">
+            <a class="nav-link" href="{% url 'partner_discount_all' partner_slug=partner|slugify %}">
+                Bulk Price Change
+            </a>
+        </nav>
+        <nav class="nav-item">
+            <a class="nav-link" href="{% url 'create_custom_charge' partner_slug=partner|slugify %}">
+                Create Custom Charge
+            </a>
+        </nav>
+
+
+    </div>
+{% endif %}

@@ -1,0 +1,15 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}403{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    <h1>403</h1>
+    <div>
+        Perhaps you need to login?
+        <a class="btn btn-primary" href="{% url 'account_login' %}">Login</a>
+        <a class="btn btn-secondary" href="{% url 'account_signup' %}">Sign Up</a>
+    </div>
+{% endblock %}

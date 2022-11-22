@@ -1,0 +1,19 @@
+{
+  "compilerOptions": {
+    "jsx": "react",
+    "module": "ES2020",
+    "moduleResolution": "Node",
+    "noImplicitAny": true,
+    "outDir": "../static/js/",
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "lib":[
+      "dom"
+    ],
+    "allowSyntheticDefaultImports": true
+  },
+  "include": [
+    "react_index.tsx"
+  ]
+}

@@ -1,0 +1,12 @@
+{% load static %}
+{% load react %}
+{% load cart_load_tags %}
+<style>
+    #cart_widget {
+        cursor: pointer;
+    }
+</style>
+{% react_render component="CartWidget" props=cart identifier="cart_widget" %}
+
+
+

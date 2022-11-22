@@ -1,0 +1,38 @@
+{% load templatehelpers %}
+
+<td class="w-5/8">
+    {{ ">"|multiply:indent }}
+    {% if purchased or partner %}
+        {% if di.available_for_download or partner %}
+            <button product_slug="{{ di.product.slug }}" di_id='{{ di.id }}'
+                    di_file_id='{{ file.id }}' path="{{ file.clean_name }}"
+                    type="button"
+                    class="Download_Button di_id_{{ di.id }} di_file_id_{{ file.id }} {{ recursive_download_class }}
+                            btn btn-secondary"
+                    id="download_{{ file.id }}" size="{{ file.file_size }}">
+        {% endif %}
+    {% endif %}
+    {{ filename }}
+    {% if purchased or partner %}
+        </button>
+        {% if partner %}
+            <button product_slug="{{ di.product.slug }}" di_id='{{ di.id }}'
+                    di_file_id='{{ file.id }}'
+                    type="button"
+                    class="Remove_Button btn btn-danger" id="remove_{{ file.id }}">
+                X
+            </button>
+        {% endif %}
+    {% endif %}
+</td>
+<td class="w-1/8">
+    {{ file.file_size|filesizeformat }}
+</td>
+<td class="text-xs md:text-sm lg:text-xs xl:text-sm 2xl:text-base w-1/8">
+    {{ file.upload_date|date:"d M Y" }}
+</td>
+<td class="text-xs md:text-sm lg:text-xs xl:text-sm 2xl:text-base w-1/8">
+    {% if file.last_download_date %}
+        {{ file.last_download_date|date:"d M Y" }}
+    {% endif %}
+</td>

@@ -1,0 +1,8 @@
+{% extends 'checkout/email/email_base.html' %}
+{% block content %}
+    Your order is ready for pickup.
+    <br>
+    Store Location and hours:
+    <br>
+    {{ order.pickup_partner.address_and_hours_info }}
+{% endblock %}

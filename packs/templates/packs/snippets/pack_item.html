@@ -1,0 +1,38 @@
+<div class="row">
+    <div class="col">
+        {% include 'checkout/snippets/addtocartbutton.html' with item=pack_item %}
+    </div>
+</div>
+<div class="row">
+    <ul class="xl:divide-y-2 xl:divide-neutral_back shoplist">
+        {% for di in product.pack_contents.all %}
+            <li class="bg-white rounded-md xl:rounded-none shadow xl:shadow-none mb-3 xl:mb-0">
+                <div class="card">
+                    <div class="row no-gutters">
+                        {% if di.product.should_be_visible or not di.product.page_is_draft %}
+                            {% if di.product.visible %}
+                                <a href="{% url 'product_detail' product_slug=di.product.slug %}">
+                            {% endif %}
+                        <div class="col-md-4">
+                            <img class='card-img' src="{{ di.product.main_image.image.url }}"
+                                 alt="{{ di.product.main_image.alt_text }}">
+                        </div>
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h2>{{ di.product.name }}
+                                </h2>
+                            </div>
+                        </div>
+                        {% if di.product.visible %}
+                            </a>
+                        {% endif %}
+
+                        {% else %}
+                            Not yet revealed!
+                        {% endif %}
+                    </div>
+                </div>
+            </li>
+        {% endfor %}
+    </ul>
+</div>

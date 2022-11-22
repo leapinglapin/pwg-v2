@@ -1,0 +1,20 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }}{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    <h2>Tokens: </h2>
+    <a href="{% url 'add_token' partner_slug=partner|slugify %}">
+        <h4>Create Token</h4>
+    </a>
+    <ul>
+        {% for token in partner.tokens.all %}
+            <a href="{% url 'edit_token' partner_slug=partner|slugify token_id=token.id %}">
+                <li>{{ token.name }}</li>
+            </a>
+        {% endfor %}
+    </ul>
+{% endblock %}

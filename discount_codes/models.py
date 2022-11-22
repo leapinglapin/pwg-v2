@@ -1,0 +1,118 @@
+import datetime
+from decimal import Decimal
+
+from django.conf.global_settings import AUTH_USER_MODEL
+from django.core.validators import MinValueValidator, MaxValueValidator
+from django.db import models
+from djmoney.models.fields import MoneyField
+from pytz import utc
+
+from checkout.models import Cart
+
+# Create your models here.
+PERCENTAGE_VALIDATOR = [MinValueValidator(0), MaxValueValidator(100)]
+
+
+class Referrer(models.Model):
+    name = models.CharField(max_length=200)
+    referrer_is_partner = models.ForeignKey("partner.Partner", on_delete=models.PROTECT, blank=True, null=True)
+
+    def __str__(self):
+        return self.name
+
+
+class DiscountCode(models.Model):
+    code = models.SlugField(max_length=80)
+
+    # If made by a particular partner, that partner can edit this.
+    # Otherwise, it's site wide and not editable except through admin.
+    partner = models.ForeignKey("partner.Partner", on_delete=models.SET_NULL, blank=True, null=True)
+
+    referrer = models.ForeignKey(Referrer, on_delete=models.PROTECT, null=True, blank=True)
+    expires_on = models.DateTimeField(blank=True, null=True)
+    once_per_customer = models.BooleanField(default=False)
+    restrict_to_publishers = models.BooleanField(default=False)
+    exclude_publishers = models.BooleanField(default=False)
+    publishers = models.ManyToManyField("shop.Publisher", blank=True)
+    min_cart_for_discount = MoneyField(decimal_places=2, max_digits=19, null=True)
+
+    def validate_code_for_cart(self, cart):
+        """
+        Determines if this code is valid at all, and sets an error message for the user.
+        :param cart:
+        :return:
+        """
+        if datetime.datetime.now().replace(tzinfo=utc) > self.expires_on:
+            cart.discount_code_message = "The code '{}' has expired".format(self)
+            cart.save()
+            return False
+        if self.once_per_customer:
+            carts_with_code = Cart.submitted.filter(discount_code=self)
+            if (cart.owner is None and cart.email is not None and carts_with_code.filter(email=cart.email,
+                                                                                         discount_code=self).exists()) or \
+                    (cart.owner is not None and carts_with_code.filter(owner=cart.owner, discount_code=self).exists()):
+                cart.discount_code_message = "The code '{}' is only valid once per customer".format(self)
+                cart.discount_code = None
+                cart.save()
+                return False  # If this person has used the code before, they can't ues it again
+        cart.discount_code_message = None
+        cart.discount_code = self
+        cart.save()
+        return True
+
+    def apply_discount_to_line_item(self, line):
+        """
+        Returns a tuple of if there is a discount for this item, and the new price for this item.
+        :param line: cart line with item.
+        :return: (applicable, new_price)
+        """
+        found_partner = False
+        for discount in self.partner_discounts.filter(partner=line.item.partner):  # get the appropriate partner
+            found_partner = True
+            if self.min_cart_for_discount and (line.cart.get_pre_discount_subtotal() < self.min_cart_for_discount):
+                line.discount_code_message = "The code '{}' requires {} to activate".format(self,
+                                                                                            self.min_cart_for_discount)
+                break  # exit loop, saving message, returning false
+            if (self.exclude_publishers and self.publishers.filter(id=line.item.publisher.id)) or (
+                    self.restrict_to_publishers and not self.publishers.filter(id=line.item.publisher.id)):
+                line.discount_code_message = "The code '{}' is not applicable to items from {}".format(self,
+                                                                                                       line.item.publisher)
+                break
+            line.discount_code_message = None
+            line.save()
+            return True, line.item.price * ((100 - discount.discount_percentage) / Decimal(100))
+        if not found_partner:
+            line.discount_code_message = "The code '{}' does not apply for items from the seller '{}'".format(self,
+                                                                                                              line.item.partner)
+        line.save()
+        return False, line.item.price
+
+    def save(self, *args, **kwargs):
+        self.code = self.code.lower()
+        return super(DiscountCode, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return self.code
+
+
+class PartnerDiscount(models.Model):
+    code = models.ForeignKey(DiscountCode, on_delete=models.CASCADE, related_name='partner_discounts')
+    partner = models.ForeignKey("partner.Partner", on_delete=models.PROTECT)
+    discount_percentage = models.IntegerField(validators=PERCENTAGE_VALIDATOR)
+    referrer_kickback = models.IntegerField(validators=PERCENTAGE_VALIDATOR)
+
+    def __str__(self):
+        return "{}% off from {} using code {}".format(self.discount_percentage, self.partner, self.code)
+
+
+class CodeUsage(models.Model):
+    """
+    Keeps track of every cart that has come in through a referral usage, or any discount code that was tried.
+    """
+    timestamp = models.DateTimeField(auto_now_add=True)
+    code = models.ForeignKey(DiscountCode, on_delete=models.CASCADE)
+    cart = models.ForeignKey(Cart, on_delete=models.CASCADE, blank=True, null=True)
+    user = models.ForeignKey(AUTH_USER_MODEL, on_delete=models.CASCADE, blank=True, null=True)
+
+    def __str__(self):
+        return "{} was used at {} for cart {}".format(self.code, self.cart, self.timestamp)

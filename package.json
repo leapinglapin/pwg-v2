@@ -1,0 +1,38 @@
+{
+  "name": "@openCGaT/openCGaT",
+  "version": "1.0.0",
+  "author": "Comics, Games, and Things LLC",
+  "private": true,
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "workspaces": [
+    "ts_src",
+    "tailwind"
+  ],
+  "scripts": {
+    "copy-static": "python manage.py collectstatic --no-input",
+    "build-workspaces": "yarn workspaces foreach --exclude @shopcgt/shopcgt run build",
+    "build": "npm-run-all --sequential build-workspaces",
+    "watch": "npm-run-all --print-label --parallel watch-workspaces watch-static",
+    "watch-static": "nodemon --ext css,js --ignore static --ignore tailwind --exec yarn run copy-static",
+    "watch-workspaces": "yarn workspaces foreach --exclude @shopcgt/shopcgt --interlaced --parallel --jobs 3 run watch"
+  },
+  "resolutions": {
+    "@types/react": "^16.9.49",
+    "@types/react-dom": "^16.9.8",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
+  },
+  "devDependencies": {
+    "@yarnpkg/plugin-workspace-tools": "~3.1.1",
+    "nodemon": "^2.0.7",
+    "npm-run-all": "^4.1.5"
+  },
+  "dependencies": {
+    "@yarnpkg/core": "^3.2.0",
+    "webpack": "^5.72.0",
+    "webpack-merge": "^5.8.0"
+  },
+  "packageManager": "yarn@3.2.0"
+}

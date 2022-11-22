@@ -1,0 +1,13 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ partner.name}} Admin{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+You are an administrator of the partner
+    <h1>{{ partner.name }}</h1>
+{% endblock %}

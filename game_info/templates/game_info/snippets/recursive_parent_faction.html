@@ -1,0 +1,4 @@
+{% if faction.subfaction_of %}
+    {% include 'game_info/snippets/recursive_parent_faction.html' with faction=faction.subfaction_of %}
+{% endif %}
+> <a href="{% url "faction" faction_id=faction.id %}">{{ faction.name }}</a>

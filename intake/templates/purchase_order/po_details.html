@@ -1,0 +1,197 @@
+{% extends 'container.html' %}
+{% load static %}
+{% load mathfilters %}
+
+
+{% block title %}Purchase Orders{% endblock %}
+
+
+{% block content %}
+    <script src="{% static "js/onscan.min.js" %}"></script>
+
+    <h2>
+        {{ po.distributor }} {{ po.po_number }}
+
+    </h2>
+    <h4>{{ po.date }}</h4>
+    <p> Total:
+        {% if po.subtotal %}
+            {{ po.subtotal }}
+        {% else %}
+            {{ po.get_line_total }}
+        {% endif %}
+        , Sum(Costs) = {{ po.calculated_total_cost }}
+    </p>
+    <p>
+        Amount Paid: {{ po.amount_charged }}
+    </p>
+    <p>
+        <a href="{% url 'edit_po' partner_slug=partner|slugify po_id=po.po_number %}">
+            Edit
+        </a>
+        {% if po.empty %}
+            <a href="{% url 'delete_po' partner_slug=partner|slugify po_id=po.po_number confirm=0 %}">
+                Delete
+            </a>
+        {% else %}
+            You can only delete an empty Purchase Order
+        {% endif %}
+    </p>
+    <p>
+        {% if po.completed %}
+            <span class="text-green">
+                <i class="fas fa-check-circle"></i>
+            </span>
+        {% else %}
+            <span class="text-red">
+                    <i class="fas fa-times-circle"></i>
+                {% if po.empty %}
+                    Empty;
+                {% endif %}
+                {% if po.products_unlinked %}
+                    Unlinked Products;
+                {% endif %}
+                {% if po.missing_costs %}
+                    Missing costs;
+                {% endif %}
+                {% if po.missing_quantities %}
+                    Missing quantity;
+                {% endif %}
+                {% if po.cost_does_not_match_up %}
+                    Subtotal != Sum(Costs)
+                {% endif %}
+            </span>
+        {% endif %}
+    </p>
+        <p>
+        Scan to add a new line, refresh to view added lines. Last Scanned: <span id="last_scan_id"></span>
+        <script>
+            onScan.attachTo(document, {
+                keyCodeMapper: function (oEvent) {
+                    if (oEvent.which == 189) {
+                        return '-';
+                    }
+                    // Fall back to the default decoder in all other cases
+                    return onScan.decodeKeyEvent(oEvent);
+                },
+                suffixKeyCodes: [13], // enter-key expected at the end of a scan
+                reactToPase: true, // Compatibility to built-in scanners in paste-mode (as opposed to keyboard-mode)
+                avgTimeByChar: 60, //Slowed down for newer scanner
+                onScan: function (sCode, iQty) { // Alternative to document.addEventListener('scan')
+                    console.log('Scanned: ' + iQty + 'x ' + sCode);
+                    let url = "/partner/{{ partner.slug }}/intake/purchase_orders/{{ po.po_number }}/"
+                    fetch(url + "scan/" + sCode + "/")
+                    document.getElementById("last_scan_id").innerHTML=sCode
+                    window.refresh()
+                },
+                {% comment %}
+                        onKeyDetect: function (iKeyCode) { // output all potentially relevant key events - great for debugging!
+                           console.log('Pressed: ' + iKeyCode);
+                       }
+               {% endcomment %}
+            });
+        </script>
+    </p>
+    <table class="table">
+        <tr>
+            <th></th>
+            <th></th>
+            <th></th>
+            <th scope="col" colspan="2" style="text-align:center;">
+                Quantity
+            <th>
+            <th></th>
+            <th></th>
+            <th></th>
+        </tr>
+        <tr>
+            <th>#</th>
+
+            <th scope="col">Name (edit)</th>
+            <th scope="col">Product Link</th>
+            <th scope="col">Distributor Link</th>
+
+            <th scope="col">Expected</th>
+            <th scope="col">Received</th>
+
+            <th scope="col">Cost Per Item (with fees)</th>
+            <th scope="col">Total Cost (with fees)</th>
+            <th scope="col">Delete</th>
+        </tr>
+        <tr>
+            <td></td>
+            <td>
+                <a href="{% url 'add_po_line' partner_slug=partner|slugify po_id=po.po_number %}">
+                    Add line
+                </a>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+        {% for line in lines %}
+            {% with line.get_proportional_fees as fees %}
+                <tr>
+                    <td>{{ line.line_number }}</td>
+
+                    <td>
+                        <a href="{% url 'edit_po_line' partner_slug=partner.slug po_id=po.po_number po_line_id=line.id %}">
+                            {% if line.name %}
+                                {{ line.name }}
+                            {% else %}
+                                {{ line.barcode }}
+                            {% endif %}
+                        </a>
+                    </td>
+                    <td>
+                        {% if line.product %}
+                            <a href=" {% url  'manage_product' partner_slug=partner.slug product_slug=line.product.slug %}">
+                                Yes
+                            </a>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if line.item %}
+                            Yes
+                        {% endif %}
+                    </td>
+                    <td>{{ line.expected_quantity }}</td>
+                    <td>{{ line.received_quantity }}</td>
+                    <td>{{ line.cost_per_item }} ({{ line.actual_cost }})</td>
+                    <td>
+                        {{ line.cost_per_item|mul:line.expected_quantity }}
+                        ({{ line.actual_cost|mul:line.expected_quantity }})
+                    </td>
+                    <td>
+                        <a href="{% url 'delete_po_line' partner_slug=partner|slugify po_id=po.po_number po_line_id=line.id confirm=0 %}">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+            {% endwith %}
+
+
+        {% endfor %}
+        <tr>
+
+            <td></td>
+            <td>
+                <a href="{% url 'add_po_line' partner_slug=partner|slugify po_id=po.po_number %}">
+                    Add line
+                </a>
+            </td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+            <td></td>
+        </tr>
+    </table>
+
+{% endblock %}

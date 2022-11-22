@@ -1,0 +1,9 @@
+<button product_slug="{{ di.product.slug }}"
+        di_id='{{ di.id }}'
+        downloadable_id="{{ di.root_downloadable.id }}"
+        download_as="{{ di.product.slug }} {% now "YmdHi" %}"
+        class="Download_All_Button btn btn-secondary flex-shrink-0"
+        type="button"
+        id="download_all_{{ di.id }}">
+    Download All
+</button>

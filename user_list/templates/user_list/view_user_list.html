@@ -1,0 +1,77 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %} Manage {{ pack.name }}{% endblock %}
+{% block extrastyle %}
+    <style>
+        .card-img {
+            object-fit: cover;
+            height: 20vh;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <h2>{{ list.name }}</h2>
+    <p>{{ list.description }}</p>
+    <h3>{{ user_list_entries.count }} users have access: </h3>
+    <script>
+        function remove_entry(id) {
+            fetch("{%  url 'manage_lists' partner_slug=partner.slug %}"
+                .concat("remove_entry/").concat(id).concat("/"))
+                .then(data => {
+                    location.reload()
+                });
+        }
+
+        function delete_invitation(id) {
+            fetch("{%  url 'manage_lists' partner_slug=partner.slug %}"
+                .concat("delete_inv/").concat(id).concat("/"))
+                .then(data => {
+                    location.reload()
+                });
+        }
+    </script>
+    {% for ule in user_list_entries %}
+        <table class="table">
+            <tr>
+                <td>
+                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=ule.user.id %}">
+                        {{ ule.user }}
+                    </a>
+
+                </td>
+                <td>
+                    {{ ule.user.email }}
+                </td>
+                <td>
+                    <button onclick="remove_entry('{{ ule.id }}')" type="button" class="btn btn-danger">
+                        X
+                    </button>
+                </td>
+            </tr>
+        </table>
+    {% endfor %}
+    <h3>{{ invitations.count }} Unaccepted email invitations:</h3>
+    {% for invitation in invitations %}
+        {{ invitation.original.plaintext }}
+        <button onclick="delete_invitation('{{ invitation.id }}')" type="button" class="btn btn-danger">
+            X
+        </button>,
+    {% endfor %}
+    <h3>CSV format email list:</h3>
+    {% for email in emails %}
+        {{ email.0 }},
+    {% endfor %}
+    <form action="." method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <h3>Add new users:</h3>
+        {{ form.csv_input }}
+        <input type="submit" value="Submit">
+    </form>
+
+{% endblock content %}
+
+
+

@@ -1,0 +1,32 @@
+<div class="col-12 col-md-9 col-xl-8 py-md-3 pl-md-5">
+    {% for item in  inventory_items %}
+        <div class="row mb-3">
+            <div class="col">
+                <div class="card bg-gray-700 text-white" style="text-shadow: 2px 2px 3px black">
+                    <div class="row no-gutters">
+                        <div class="col-md-8">
+                            <div class="card-body">
+                                <h5 class="card-title"><span
+                                        id="{{ item.id }}_count">{{ item.current_inventory }}</span>
+                                    at {{ item.partner }}</h5>
+                                {% if partner and partner == item.partner %}
+                                    <a href="{% url 'edit_item' partner_slug=partner.slug product_slug=product.slug item_id=item.id %}">
+                                    Edit
+                                    </a>
+                                    <a href="{% url 'delete_item' partner_slug=partner.slug product_slug=product.slug item_id=item.id confirm=0 %}">
+                                    Delete
+                                    </a>
+                                {% endif %}
+                                <div class="row">
+                                    <div class="col">
+                                        {% include 'checkout/snippets/addtocartbutton.html' %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>

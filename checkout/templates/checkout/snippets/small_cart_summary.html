@@ -1,0 +1,34 @@
+{% if cart.lines.all %}
+    <table class="table">
+
+        <tr>
+            <td>Subtotal:</td>
+            <td>{{ cart.get_total_subtotal }}</td>
+        </tr>
+
+        {% if cart.is_shipping_required  and cart.delivery_method != cart.PICKUP_ALL%}
+            <tr>
+                <td>Shipping:</td>
+                {% if cart.can_get_shipping %}
+                    <td>{{ cart.get_shipping }}</td>
+                {% else %}
+                    <td>Need address</td>
+                {% endif %}
+            </tr>
+        {% endif %}
+        <tr>
+            <td>Tax:</td>
+            {% if cart.can_get_tax %}
+                <td>{{ cart.get_tax }}</td>
+            {% else %}
+                <td> Need address</td>
+            {% endif %}
+        </tr>
+        <tr>
+            <td>Estimated total:</td>
+            <td> {{ cart.get_estimate_total }}</td>
+        </tr>
+    </table>
+{% else %}
+    <p> Items you add to your cart will appear here.</p>
+{% endif %}

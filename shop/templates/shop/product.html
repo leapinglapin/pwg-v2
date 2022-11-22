@@ -1,0 +1,463 @@
+{% extends 'container.html' %}
+{% load wagtailcore_tags %}
+{% load static %}
+
+{% block title %}{{ product.name }}{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+    <style>
+        .product_image {
+        }
+
+        .product_image img {
+            max-height: 100%;
+            max-width: 100%;
+        }
+
+        a.item-type-tab {
+            text-shadow: 2px 2px 3px black;
+        }
+    </style>
+
+{% endblock %}
+{% block content %}
+    <div class="row mb-3">
+        <div class="col-lg-4 themed-grid-col product_image">
+
+            <div class="row"><h1>{{ product.name }}</h1></div>
+            <div class="row">
+                {% if partner %}
+                    <table class="table">
+                        <tr>
+                            <td>
+                                {% include 'shop/snippets/visibility_reminders.html' %}
+
+                            </td>
+                            <td>
+                                {% if pack_items %}
+                                    <a href="{% url 'edit_digital_pack' partner_slug=partner.slug pack_id=product.id %}">
+                                        Edit Pack Product
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'edit_product' product_slug=product|slugify partner_slug=partner|slugify %}">
+                                        Edit Product
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if product.item_set.count == 0 %}
+                                    <a href="{% url 'delete_product' product_slug=product|slugify partner_slug=partner|slugify confirm=0 %}">
+                                        Delete Product
+                                    </a>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <a href=" {% url  'product_detail' product_slug=product.slug %}">
+                                    View public page
+                                </a>
+                            </td>
+
+                        </tr>
+                    </table>
+                {% else %}
+                    {% if user.is_authenticated %}
+                        {% if user in product.partner.administrators.all %}
+                            <a href="{% url 'manage_product' partner_slug=product.partner.slug product_slug=product.slug %}">
+                                Manage Product
+                            </a>
+                        {% else %}
+                            {% with user|get_retail_partners as partners %}
+                                {% if product.all_retail and partners %}
+                                    <strong>Manage as:</strong>
+                                    {% for partner in partners %}
+                                        <a href="{% url 'manage_product' partner_slug=partner.slug product_slug=product.slug %}">
+                                            {{ partner }}
+                                        </a>
+                                    {% endfor %}
+                                {% endif %}
+                            {% endwith %}
+                        {% endif %}
+                    {% endif %}
+                {% endif %}
+            </div>
+            <div class="row">
+                {% if product.main_image %}
+                    <a href="{{ product.main_image.image.url }}" target="_blank" id="displayed_image_link">
+                        <img class='card-image' src="{{ product.main_image.image.url }}"
+                             alt="{{ product.main_image.alt_text }}" id="displayed_image">
+                    </a>
+                {% endif %}
+                {% if partner %}
+                    <a href="{% url 'upload_main_image' product_slug=product|slugify partner_slug=partner|slugify %}">
+                        Set Image
+                    </a>
+                {% endif %}
+            </div>
+            <script>
+                function updateMainImage(element) {
+                    document.getElementById('displayed_image').src = element.src;
+                    document.getElementById('displayed_image_link').href = element.src;
+                    console.log('set image source');
+                }
+            </script>
+            <div class="row grid grid-cols-4" id="product_image_gallery">
+                {#  First image in the gallery #}
+                {% if product.main_image %}
+                    <div>
+                        <img class='img-thumbnail' src="{{ product.main_image.image.url }}"
+                             alt="{{ product.main_image.alt_text }}"
+                             style="max-height: 200px;, max-width: 100%"
+                             onclick="updateMainImage(this);"
+                        />
+                        {% if partner %}
+                            <a type="button" class="btn btn-danger"
+                               href="{% url 'remove_image' product_slug=product.slug partner_slug=partner.slug image_id=product.main_image.id %}">
+                                Remove Image
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {#  Image Gallery #}
+                {% for image in product.image_gallery.all %}
+                    <div>
+                        <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" class="img-thumbnail"
+                             style="max-height: 200px;"
+                             onclick="updateMainImage(this)"/>
+                        {% if partner %}
+                            <a type="button" class="btn btn-danger"
+                               href="{% url 'remove_image' product_slug=product.slug partner_slug=partner.slug image_id=image.id %}">
+                                Remove Image
+                            </a>
+                        {% endif %}
+                    </div>
+                {% endfor %}
+
+            </div>
+
+            {% if partner %}
+                <div class="row">
+                    <form action="{% url 'manage_image_upload_endpoint' partner_slug=partner.slug product_slug=product.slug %}"
+                          class="dropzone cgt_image_upload"
+                          parent_node_id="{{ parent_node_id }}"
+                          id="upload-{{ parent_node_id }}">
+                        {% csrf_token %}
+
+                    </form>
+                </div>
+                <div class="row">
+                    <a href="{% url 'upload_additional_image' product_slug=product|slugify partner_slug=partner|slugify %}">
+                        Add Image with Alt Text
+                    </a>
+                </div>
+            {% endif %}
+            {#  End image Section #}
+
+            <div class="row mb-3">
+                <table>
+
+                    {% if product.is_preorder %}
+                        <tr>
+                            <td>
+                                Preorder
+                            </td>
+                        </tr>
+                    {% endif %}
+                    <br>
+                    {% if product.release_date %}
+                        <tr>
+                            <td>
+                                {% if product.is_preorder %}
+                                    Releases on:
+                                {% else %}
+                                    Released on:
+                                {% endif %}
+                                {{ product.release_date }}
+                            </td>
+                        </tr>
+                    {% else %}
+                        <tr>
+                            <td>
+                                Unknown Release Date
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.in_store_pickup_only %}
+                        <tr>
+                            <td>
+                                Only available for pickup
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.barcode %}
+                        <tr>
+                            <td>
+                                Barcode: {{ product.barcode }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.publisher %}
+                        <tr>
+                            <td>
+                                Published by
+                                <a href="/shop/?publisher={{ product.publisher.id }}">{{ product.publisher }}</a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.weight %}
+                        <tr>
+                            <td>
+                                {{ product.weight }} lbs
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if not product.all_retail %}
+                        <tr>
+                            <td>
+                                Created by <a href="/shop/?partner={{ product.partner.slug }}">{{ product.partner }}</a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.games.exists %}
+                        <tr>
+                            <td>
+                                Games:
+                                <ul>
+                                    {% for game in product.games.all %}
+                                        <li><a href="/shop/?game={{ game.id }}">{{ game }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.factions.exists %}
+                        <tr>
+                            <td>
+                                Factions:
+                                <ul>
+                                    {% for faction in product.factions.all %}
+                                        <li><a href="/shop/?faction={{ faction.id }}">{{ faction }}</a></li>
+                                    {% endfor %}
+                                </ul>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.categories.exists %}
+                        <tr>
+                            <td>
+                                Categories:
+                                {% include 'shop/snippets/category_widget.html' with categories=product.categories.all %}
+
+                            </td>
+                        </tr>
+                    {% endif %}
+                </table>
+
+            </div>
+            {% if dist_records %}
+                <h3>Distributor:</h3>
+                {% for dist_item in dist_records %}
+                    <div class="card">
+                        <h4>{{ dist_item.dist_name }}</h4>
+                        {{ dist_item.distributor }}<br>
+                        MSRP: {{ dist_item.msrp }}<br>
+                        MAP: {{ dist_item.map }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+        </div>
+        {% comment %} End of the sidebar {% endcomment %}
+        <div class="col-md-8 themed-grid-col">
+            {% if not pack_items %}
+                <ul class="nav nav-tabs" id="purchase-tabs">
+                    {% if inv_items or partner.retail_partner %}
+                        <li class="nav-item">
+                            <a class="nav-link item-type-tab active text-white bg-primary-800" id="inventory-tab"
+                               data-toggle="tab" href="#inventory"
+                               role="tab"
+                               aria-controls="inventory" aria-selected="true">Inventory Item</a>
+                        </li>
+                    {% endif %}
+                    {% if download_item or partner.digital_partner %}
+                        <li class="nav-item">
+                            <a class="nav-link item-type-tab text-white bg-primary-800
+                                {% if inv_items or partner.retail_partner %}
+                                {% else %}
+                                    active
+                                {% endif %}"
+                               id="download-tab"
+                               data-toggle="tab" href="#digital" role="tab" aria-controls="mto"
+                               {% if inv_items %}{% else %}aria-selected="true"{% endif %}>
+                                Digital Download
+                            </a>
+                        </li>
+                    {% endif %}
+                    {% if mto_items or partner.enable_mto %}
+                        <li class="nav-item">
+                            <a class="nav-link item-type-tab text-white bg-primary-800
+                                {% if inv_items or partner.retail_partner or download_item or partner.digital_partner %}
+                                {% else %}
+                                    active
+                                {% endif %}"
+                               id="mto-tab"
+                               data-toggle="tab" href="#mto" role="tab" aria-controls="mto"
+                               {% if inv_items %}{% else %}aria-selected="true"{% endif %}>
+                                Made to Order
+                            </a>
+                        </li>
+                    {% endif %}
+                </ul>
+                <div class="tab-content" id="item-tab-content">
+                {% if inv_items or partner.retail_partner %}
+                    <div class="p-2 tab-pane fade show active" id="inventory" role="tabpanel"
+                         aria-labelledby="inventory-tab">
+                        {% if partner %}
+                            <a href="{% url "add_inventory_item" partner_slug=partner.slug product_slug=product.slug %}">
+                                Add Inventory Item
+                            </a>
+                        {% endif %}
+                        {% include 'shop/snippets/inventory_items.html' with inventory_items=inv_items %}
+                    </div>
+                {% endif %}
+
+                {% if download_item or partner.digital_partner %}
+                    <div class="p-2 tab-pane fade
+                            {% if inv_items or partner.retail_partner %}
+                            {% else %}
+                            show active
+                            {% endif %}"
+                         id="digital"
+                         role="tabpanel" aria-labelledby="download-tab">
+                        {% if partner.digital_partner and not download_item %}
+
+                            <a href="{% url 'digital_add_mng' partner_slug=partner|slugify product_slug=product|slugify %}">
+                                Add digital version</a>
+                        {% else %}
+                            {% include 'digital/snippets/digital_product.html' %}
+                        {% endif %}
+                    </div>
+                {% endif %}
+                {% if mto_items or partner.enable_mto %}
+                    <div class="p-2 tab-pane fade
+                            {% if inv_items or partner.retail_partner or download_item or partner.digital_partner %}
+                            {% else %}
+                                show active
+                            {% endif %}"
+                         id="mto"
+                         role="tabpanel" aria-labelledby="mto-tab">
+                        {% if partner.enable_mto %}
+                            <a href="{% url 'add_mto_item' partner_slug=partner|slugify product_slug=product|slugify %}">
+                                Add Made to Order </a>
+                        {% endif %}
+                        {% include 'shop/snippets/mto_items.html' %}
+                    </div>
+                {% endif %}
+            {% else %}
+                {% for pack_item in pack_items %}
+                    {% include 'packs/snippets/pack_item.html' %}
+                {% endfor %}
+            {% endif %}
+            </div>
+
+            <div class="row mb-3 p-0.5">
+                <p> {{ product.description|richtext }} </p>
+            </div>
+            {% if sales %}
+                <div class="row mb-3 p-0.5">
+                    <h2> Sales ({{ x_sold }} Sold)</h2>
+                    <table class="table">
+                        <tr>
+                            <th scope="col">ID</th>
+                            <th scope="col">User</th>
+                            <th scope="col">Date</th>
+                            <th scope="col">Price per unit</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Subtotal</th>
+                            <th scope="col">Location</th>
+                            <th scope="col">Status</th>
+                        </tr>
+                        {% for line in sales %}
+                            <tr>
+
+                                <td>
+                                    <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=line.cart.id %}">
+                                        {{ line.cart.id }}
+                                    </a>
+                                </td>
+                                <td>
+                                    {% if line.cart.owner %}
+                                        <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=line.cart.owner.id %}">
+                                            {{ line.cart.owner.username }} ({{ line.cart.owner.email }})
+                                        </a>
+                                    {% else %}
+                                        {{ line.cart.email }}
+                                    {% endif %}
+                                </td>
+                                <td>
+                                    <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=line.cart.id %}">
+                                        {{ line.cart.date_submitted }}
+                                    </a>
+                                </td>
+                                <td>{{ line.price_per_unit_at_submit }}</td>
+                                <td>{{ line.quantity }}</td>
+
+                                <td>{{ line.get_subtotal }}</td>
+
+                                <td>
+                                    {% if line.cart.at_pos %}
+                                        {{ line.cart.payment_partner }}
+                                    {% else %}
+                                        Online
+                                    {% endif %}
+                                </td>
+                                <td>{{ line.cart.status }}</td>
+                            </tr>
+
+                        {% endfor %}
+                    </table>
+
+                </div>
+            {% endif %}
+            {% if po_lines %}
+                <div class="row mb-3 p-0.5">
+                    <h2> Purchase Order Records ({{ po_lines.count }})</h2>
+                    <table class="table">
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">Distributor</th>
+                            <th scope="col">Invoice/PO Number</th>
+                            <th scope="col">Quantity</th>
+                            <th scope="col">Cost Per Item (with fees)</th>
+                        </tr>
+                        {% for po_line in po_lines %}
+                            <tr>
+                                <td>{{ po_line.po.date }}</td>
+                                <td>{{ po_line.po.distributor }}</td>
+                                <td>
+                                    <a href="{% url 'po_details' partner_slug=partner|slugify po_id=po_line.po.po_number %}">
+                                        {{ po_line.po.po_number }}
+                                    </a>
+                                </td>
+                                <td>{{ po_line.received_quantity }}</td>
+                                <td>{{ po_line.cost_per_item }} ({{ po_line.actual_cost }})</td>
+                            </tr>
+                        {% endfor %}
+                    </table>
+
+                </div>
+            {% endif %}
+        </div>
+    </div>
+
+{% endblock %}
+
+{% block body_js %}
+    <script>
+        $('#purchase-tabs a').on('click', function (e) {
+            e.preventDefault();
+            $(this).tab('show');
+        });
+
+    </script>
+{% endblock %}
