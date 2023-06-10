@@ -1,24 +1,16 @@
 from rest_framework import serializers
 
 from digitalitems.models import DigitalItem
-from packs.models import PackItem
 from partner.serializers import PartnerSerializer
-from .models import Item, Product, InventoryItem, MadeToOrder, ProductImage
-
-
-class ImageSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = ProductImage
-        fields = ('image', 'alt_text')
+from .models import Item, Product, InventoryItem, MadeToOrder
 
 
 class ProductSerializer(serializers.ModelSerializer):
     visible = serializers.SerializerMethodField()
-    main_image = ImageSerializer()
 
     class Meta:
         model = Product
-        fields = ('id', 'name', 'slug', 'visible', 'main_image')
+        fields = ('id', 'name', 'slug', 'visible')
 
     @staticmethod
     def get_visible(product):

@@ -1,4 +1,5 @@
 from django.urls import path
+
 from .views import *
 
 urlpatterns = [
@@ -11,6 +12,16 @@ urlpatterns = [
     path('<int:cart_id>/completed/', partner_order_mark_completed, name='partner_order_mark_completed'),
     path('<int:cart_id>/paid/', partner_order_mark_paid, name='partner_order_mark_paid'),
     path('<int:cart_id>/cancelled/', past_order_mark_cancelled, name='partner_order_mark_cancelled'),
+    path('<int:cart_id>/update/', partner_order_status_update, name='partner_order_status_update'),
+
+    path('<int:cart_id>/comments/', update_partner_comments, name='partner_update_comments'),
+
+    path('<int:cart_id>/line/<int:line_id>/cancel/', partner_cancel_line,
+         name='partner_cancel_line'),
+    path('<int:cart_id>/line/<int:line_id>/ready/', partner_ready_line,
+         name='partner_ready_line'),
+    path('<int:cart_id>/line/<int:line_id>/complete/', partner_complete_line,
+         name='partner_complete_line'),
 
     path('pos/', pos, name='pos'),
     path('pos/data/', partner_cart_endpoint, name='partner_cart_endpoint'),

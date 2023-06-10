@@ -3,7 +3,7 @@ from django.db import models
 # Create your models here.
 from django.utils.text import slugify
 from djmoney.models.fields import MoneyField
-from wagtail.core.fields import RichTextField
+from wagtail.fields import RichTextField
 
 
 class Game(models.Model):

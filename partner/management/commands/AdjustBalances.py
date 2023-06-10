@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 import traceback
 
 from checkout.models import Cart
-from partner.models import Partner
+from partner.models import Partner, PartnerTransaction
 
 
 class Command(BaseCommand):
@@ -15,13 +15,12 @@ class Command(BaseCommand):
             log(f, "{} had balance of {} at {}".format(partner.name, partner.acct_balance, datetime.now()))
             partner.reset_balance()
             log(f, 'Reset balance for {}'.format(partner.name))
-
-        for cart in Cart.submitted.all():
-            cart.clear_partner_payments()
+        PartnerTransaction.objects.filter(type=PartnerTransaction.PURCHASE).delete()
         for cart in Cart.submitted.all().order_by('date_paid'):
             cart.pay_partners(suppress_emails=True)
         for partner in Partner.objects.all().order_by('name'):
             partner.update_balance()
+            partner.refresh_from_db()
             log(f, "{} has balance of {} at {}".format(partner.name, partner.acct_balance, datetime.now()))
         f.write("Adjustment complete")
         f.close()

@@ -27,18 +27,17 @@ DEBUG = True
 # Application definition
 
 apps_to_install = [
-    'partner.apps.PartnerConfig',
-    'cgtinfo.apps.CgtinfoConfig',
-    'shop.apps.ShopConfig',
-    'intake.apps.IntakerConfig',
-    'squarelink.apps.SquarelinkConfig',
-    'digitalitems.apps.DigitalitemsConfig',
-    'checkout.apps.CheckoutConfig',
-    'inventory_report.apps.InventoryReportConfig',
+    'partner',
+    'home_and_info',
+    'shop',
+    'intake',
+    'digitalitems',
+    'checkout',
+    'inventory_report',
     'discount_codes',
     'giveaway',
-    'tokens',
-    'subscriptions',
+    'billing',
+    'payments',
     'game_info',
     'posts',
     'events',
@@ -47,8 +46,6 @@ apps_to_install = [
     'images',
     'userinfo',
     'user_list',
-    'packs',
-    'crowdfund',
     'financial',
     # ^ Our Apps
     # v Dependencies
@@ -79,10 +76,12 @@ apps_to_install = [
     'polymorphic',
     'mptt',
 
+    # Old wagtail richtext:
+    "wagtail.contrib.legacy.richtext",
+
     # add the wagtail CMS
     'wagtail.contrib.forms',
     'wagtail.contrib.redirects',
-    "wagtail.contrib.modeladmin",
     'wagtail.embeds',
     'wagtail.sites',
     'wagtail.users',
@@ -91,7 +90,7 @@ apps_to_install = [
     'wagtail.images',
     'wagtail.search',
     'wagtail.admin',
-    'wagtail.core',
+    'wagtail',
 
     'modelcluster',
     'taggit',
@@ -124,8 +123,7 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'openCGaT.urls'
-WAGTAIL_SITE_NAME = os.environ.get(
-    'WAGTAIL_SITE_NAME', "Comics Games and Things")
+
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',

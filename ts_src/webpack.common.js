@@ -8,7 +8,7 @@ module.exports = {
     },
     target: "web",
     output: {
-        path: path.resolve(__dirname, "../openCGaT/static/js/cgt/"),
+        path: path.resolve(__dirname, "../opencgat/static/js/cgt/"),
         filename: "[name].js",
     },
     resolve: {

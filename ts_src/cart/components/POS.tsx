@@ -113,7 +113,7 @@ const POS: React.FunctionComponent<IPOSProps> = (props: IPOSProps): JSX.Element 
                             {currentStatus.active_cart.open ? (
                                 <>
                                     {currentStatus.active_cart.owner_info ==
-                                    null ? (
+                                    "Anonymous" ? (
                                         <form onSubmit={HandleOwner}>
                                             <label>
                                                 Email:

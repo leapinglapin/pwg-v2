@@ -1,0 +1,58 @@
+{% extends 'container.html' %}
+{% load templatehelpers %}
+{% load static %}
+
+{% block title %}Billing History{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <h2>Balance: {{ balance }} </h2>
+
+    <div class="flex gap-2">
+        <h3>
+            <a href="{% url 'billing_not_on_statement' partner_slug=partner.slug %}"> Events not yet on
+                statement </a>
+        </h3>
+        {% if user.is_staff %}
+
+            <h3><a href="{% url 'staff_log_payment' partner_slug=partner.slug %}" class="btn btn-danger"> Log
+                Payment</a></h3>
+            <h3><a href="{% url 'staff_log_payout' partner_slug=partner.slug %}" class="btn btn-success"> Log Payout</a>
+            </h3>
+            <h3><a href="{% url 'staff_log_other' partner_slug=partner.slug %}" class="btn btn-warning"> Log Other</a>
+            </h3>
+
+        {% endif %}
+
+    </div>
+    <table class="table">
+        <thead>
+        <tr>
+            <th scope="col">ID</th>
+            <th scope="col">Year</th>
+            <th scope="col">Month</th>
+            <th scope="col">Status</th>
+            <th scope="col">Total</th>
+
+        </tr>
+        </thead>
+        {% for statement in statements %}
+            <tr>
+                <td>
+                    <a href="{% url 'statement_details' partner_slug=partner.slug statement_id=statement.id %}">
+                        {{ statement.id }}
+                    </a>
+                </td>
+                <td>{{ statement.statement_start.year }}</td>
+                <td>{{ statement.statement_start.month }}</td>
+                <td>{% if statement.finalized %} Closed {% else %} Open {% endif %}</td>
+                <td>{{ statement.get_statement_total }}</td>
+            </tr>
+        {% endfor %}
+
+    </table>
+
+{% endblock %}

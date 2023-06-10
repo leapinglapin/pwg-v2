@@ -1,5 +1,8 @@
-import traceback
+import json
+from _decimal import Decimal
 
+import stripe
+from django.conf import settings
 from django.contrib.admin.views.decorators import staff_member_required
 from django.contrib.auth.decorators import login_required
 from django.contrib.auth.models import User
@@ -7,14 +10,19 @@ from django.core.paginator import Paginator
 from django.http import HttpResponse, JsonResponse, HttpResponseRedirect, HttpResponseNotFound
 from django.shortcuts import get_object_or_404
 from django.template.response import TemplateResponse
+from django.urls import reverse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
+from djmoney.money import Money
 
+from digitalitems.models import DigitalItem
 from partner.models import get_partner_or_401
-from shop.models import CustomChargeItem
-from subscriptions.forms import UserDefaultAddressForm
-from .forms import *
-from .serializers import *
+from shop.models import CustomChargeItem, Product, Item, InventoryItem
+from shop.serializers import ItemSerializer
+from .forms import PickupForm, EmailForm, BillingAddressForm, PaymentMethodForm, ShippingAddressForm, FiltersForm, \
+    TrackingInfoForm, PartnerCommentsForm
+from .models import Cart, CheckoutLine, StripeCustomerId, StripePaymentIntent
+from .serializers import CartSerializer, get_pos_props
 
 
 @csrf_exempt
@@ -26,9 +34,6 @@ def json_cart(request):
         try:
             item_ids = data['buttonItems']
             for item in Item.objects.filter(id__in=item_ids):
-                if isinstance(item, InventoryItem) and item.use_linked_inventory:
-                    sq_item = item.squareinventoryitem_set.first()
-                    sq_item.update_local_stock()
                 response['buttonItems'].append(ItemSerializer(item, context={'cart': request.cart}).data)
         except KeyError:
             pass
@@ -40,7 +45,7 @@ def add_to_cart(request, item_id, quantity=1):
     try:
         item = get_object_or_404(Item, id=item_id)
         line, _ = request.cart.add_item(item, quantity)
-        if (isinstance(item, DigitalItem) or isinstance(item, PackItem)) \
+        if isinstance(item, DigitalItem) \
                 and item.pay_what_you_want and request.method == 'POST':
             print(request.body)
             body = json.loads(request.body)
@@ -85,6 +90,13 @@ def checkout_start(request):
         'next_view': request.cart.next_checkout_view(view=Cart.V_START, user=request.user),
     }
     return TemplateResponse(request, "checkout/checkout_start.html", context=context)
+
+
+def checkout_react(request):
+    context = {
+        'props': {},
+    }
+    return TemplateResponse(request, "checkout/react_checkout.html", context=context)
 
 
 def checkout_delivery_method(request):
@@ -299,45 +311,17 @@ def checkout_done(request):
     return TemplateResponse(request, "checkout/checkout_done.html", context=context)
 
 
-def create_stripe_payment(request):
-    if not request.cart.is_frozen:
-        return HttpResponse(403)
-    if request.method == 'POST':
-        if request.user.is_authenticated:
-            customer_id = StripeCustomerId.objects.get_customer_id(user=request.user)
-        else:
-            customer_id = None
-        try:
-            amount = request.cart.final_total.amount
-            amount_cents = int(amount * 100)
-            existing_intents = request.cart.stripepaymentintent_set.filter(cancelled=False, cart=request.cart)
-            if existing_intents.count() > 1:
-                for intent_db in existing_intents:
-                    intent_db.cancel()
-            if existing_intents.count() == 1:
-                intent_db = existing_intents.first()
-                intent = stripe.PaymentIntent.retrieve(intent_db.id)
-                if int(intent_db.amount_to_pay.amount * 100) != amount_cents:
-                    intent.modify(intent_db.id, metadata={"amount": amount_cents})
-            else:
-                intent = stripe.PaymentIntent.create(
-                    customer=customer_id,
-                    setup_future_usage='off_session',
-                    amount=amount_cents,
-                    currency='usd',
-                    description="CGT Cart Number: " + str(request.cart.id),
-                )
-                intent_db = request.cart.stripepaymentintent_set.create(id=intent.stripe_id,
-                                                                        amount_to_pay=amount)
-            return JsonResponse({
-                'clientSecret': intent['client_secret'],
-                'publishableAPIKey': settings.STRIPE_PUBLIC_KEY,
-            })
-        except Exception as e:
-            print(e)
-            print(traceback.format_exc())
-            return HttpResponse(status=403)
-    return HttpResponse(status=500)
+def checkout_complete(request, order_id):
+    """
+    Landing page for checkout 2.0 complete
+    :param request:
+    :param order_id:
+    :return:
+    """
+    old_cart = Cart.objects.get(id=order_id)
+
+    context = {'order': old_cart}
+    return TemplateResponse(request, "checkout/checkout_done.html", context=context)
 
 
 @login_required
@@ -361,8 +345,7 @@ def past_order_details(request, cart_id):
 @require_POST
 @csrf_exempt
 def stripe_webhook(request):
-    payload = request.body
-    event = None
+    return HttpResponse(status=200)
 
     payload = request.body
     sig_header = request.META['HTTP_STRIPE_SIGNATURE']
@@ -409,7 +392,7 @@ def stripe_webhook(request):
 def partner_orders(request, partner_slug):
     partner = get_partner_or_401(request, partner_slug=partner_slug)
 
-    lines = CheckoutLine.objects.filter(item__partner=partner)
+    lines = CheckoutLine.objects.filter(partner_at_time_of_submit=partner)
     orders = Cart.submitted.filter(lines__in=lines) \
              | Cart.submitted.filter(payment_partner=partner, payment_method=Cart.PAY_IN_STORE) \
              | Cart.submitted.filter(pickup_partner=partner, delivery_method=Cart.PICKUP_ALL)
@@ -441,10 +424,10 @@ def partner_orders(request, partner_slug):
 @login_required
 def partner_order_details(request, partner_slug, cart_id):
     partner = get_partner_or_401(request, partner_slug=partner_slug)
-    form = TrackingInfoForm(instance=request.cart)
     try:
         past_cart = Cart.submitted.get(id=cart_id)
-        print(past_cart)
+        form = TrackingInfoForm(instance=past_cart)
+
         context = {'past_cart': past_cart, 'partner': partner, 'form': form}
 
         if request.method == 'POST':
@@ -457,6 +440,7 @@ def partner_order_details(request, partner_slug, cart_id):
                 past_cart = form.save()
                 past_cart.mark_shipped()
                 print(past_cart)
+        context['comments_form'] = PartnerCommentsForm(instance=past_cart)
 
         return TemplateResponse(request, "checkout/partner_order_details.html", context=context)
     except Cart.DoesNotExist:
@@ -579,25 +563,6 @@ def remove_card(request, card_id):
                 )
 
     return HttpResponseRedirect(reverse('saved_cards'))
-
-
-def default_address(request):
-    address = None
-    if hasattr(request.user, 'default_address'):
-        address = request.user.default_address
-    form = UserDefaultAddressForm(instance=address)
-    if request.method == 'POST':
-        form = UserDefaultAddressForm(instance=address, data=request.POST)
-        if form.is_valid():
-            address = form.save(commit=False)
-            address.user = request.user
-            address.save()
-
-    context = {
-        'form': form,
-        'address': address,
-    }
-    return TemplateResponse(request, "account/billing_address.html", context=context)
 
 
 def pos(request, partner_slug, cart_id=None):
@@ -837,3 +802,97 @@ def all_orders_tax(request):
         'num_total': orders.count(),
     }
     return TemplateResponse(request, "all_orders_tax.html", context=context)
+
+
+def partner_cancel_line(request, cart_id, line_id, partner_slug):
+    partner = get_partner_or_401(request, partner_slug)
+    cart = Cart.objects.get(id=cart_id)
+    try:
+        line = cart.lines.get(id=line_id)
+        if partner != line.partner_at_time_of_submit:
+            return HttpResponse(status=401)
+        line.cancel()
+        line.save()
+        return HttpResponseRedirect(
+            reverse('partner_order_details', kwargs={'partner_slug': partner_slug, 'cart_id': cart_id}))
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=400)
+
+
+def partner_ready_line(request, cart_id, line_id, partner_slug):
+    partner = get_partner_or_401(request, partner_slug)
+    cart = Cart.objects.get(id=cart_id)
+    try:
+        line = cart.lines.get(id=line_id)
+        if partner != line.partner_at_time_of_submit:
+            return HttpResponse(status=401)
+        line.mark_ready()
+        line.save()
+        return HttpResponseRedirect(
+            reverse('partner_order_details', kwargs={'partner_slug': partner_slug, 'cart_id': cart_id}))
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=400)
+
+
+def partner_complete_line(request, cart_id, line_id, partner_slug):
+    partner = get_partner_or_401(request, partner_slug)
+    cart = Cart.objects.get(id=cart_id)
+    try:
+        line = cart.lines.get(id=line_id)
+        if partner != line.partner_at_time_of_submit:
+            return HttpResponse(status=401)
+        fulfilment_cart = cart
+        if len(request.GET) != 0:
+            fulfilment_cart_id = request.GET.get('cart', "")
+            if fulfilment_cart_id:
+                try:
+                    fulfilment_cart = Cart.objects.get(id=fulfilment_cart_id)
+                except Exception:
+                    pass
+        print(fulfilment_cart)
+        line.fulfilled_in_cart = fulfilment_cart
+        line.complete()
+        line.save()
+        return HttpResponseRedirect(
+            reverse('partner_order_details', kwargs={'partner_slug': partner_slug, 'cart_id': cart_id}))
+    except Exception as e:
+        print(e)
+        return HttpResponse(status=400)
+
+
+@login_required
+def partner_order_status_update(request, partner_slug, cart_id):
+    partner = get_partner_or_401(request, partner_slug=partner_slug)
+    try:
+        past_cart = Cart.submitted.get(id=cart_id)
+        partners, _ = past_cart.get_order_partners()
+        if partner not in partners:
+            return HttpResponse(status=403)
+        past_cart.send_status_update()
+        return HttpResponseRedirect(
+            reverse('partner_order_details', kwargs={'partner_slug': partner_slug, 'cart_id': cart_id}))
+    except Cart.DoesNotExist:
+        return HttpResponse(status=404)
+
+
+def update_partner_comments(request, partner_slug, cart_id):
+    partner = get_partner_or_401(request, partner_slug=partner_slug)
+    try:
+        past_cart = Cart.submitted.get(id=cart_id)
+        partners, _ = past_cart.get_order_partners()
+        if partner not in partners:
+            return HttpResponse(status=403)
+        if request.method == "POST":
+            form = PartnerCommentsForm(request.POST, instance=past_cart)
+            if form.is_valid():
+                form.save()
+                return HttpResponseRedirect(
+                    reverse('partner_order_details', kwargs={'partner_slug': partner_slug, 'cart_id': cart_id}))
+            else:
+                return HttpResponse(status=400)
+        return HttpResponse(status=400)
+
+    except Cart.DoesNotExist:
+        return HttpResponse(status=404)

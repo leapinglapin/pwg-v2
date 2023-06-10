@@ -27,10 +27,35 @@
                         {% endif %}
                     </td>
                     <td>{% include 'shop/snippets/item_type_icon.html' with item=line.item %}</td>
-                    <td>{{ line.item.partner }}</td>
+
+                    <td>{% if line.partner_at_time_of_submit %}
+                        {{ line.partner_at_time_of_submit }}
+                    {% else %}
+                        {{ line.item.partner }}
+                    {% endif %}
+                    </td>
                     {% if extra_col %}
                         <td>
                             <text>{{ line.status_text|linebreaks }}</text>
+                            {% if manage and cart.status != "Cancelled" and cart.status != "Completed" and not line.cancelled %}
+                                <a class="btn btn-danger"
+                                   href="{% url 'partner_cancel_line' cart_id=past_cart.id line_id=line.id partner_slug=partner.slug %}">
+                                    Cancel
+                                </a>
+                            {% endif %}
+                            {% if manage and cart.status != "Cancelled" and cart.status != "Completed" and not line.ready and not line.fulfilled %}
+                                <a class="btn btn-primary"
+                                   href="{% url 'partner_ready_line' cart_id=past_cart.id line_id=line.id partner_slug=partner.slug %}">
+                                    Ready
+                                </a>
+                            {% endif %}
+                            {% if manage and cart.status != "Cancelled" and cart.status != "Completed" and not line.fulfilled %}
+                                <form method="get"
+                                      action="{% url 'partner_complete_line' cart_id=past_cart.id line_id=line.id partner_slug=partner.slug %}">
+                                    <label for="cart">Order:</label><input type="number" id="cart" name="cart"/>
+                                    <input class="btn btn-primary" type="submit" value="Complete">
+                                </form>
+                            {% endif %}
                         </td>
                     {% endif %}
                     <td>{{ line.quantity }}</td>

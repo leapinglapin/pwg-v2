@@ -1,8 +1,8 @@
-from django.conf import settings
 from django.contrib import messages
 from django.core.signing import BadSignature, Signer
 from django.utils.functional import SimpleLazyObject, empty
 from django.utils.translation import gettext_lazy as _
+
 from .models import *
 
 
@@ -118,7 +118,6 @@ class CartMiddleware:
         manager = Cart.open
         cookie_key = self.get_cookie_key()
         cookie_cart = self.get_cookie_cart(cookie_key, request, manager)
-
         if hasattr(request, 'user') and request.user.is_authenticated:
             # Signed-in user: if they have a cookie cart too, it means
             # that they have just signed in, and we need to merge their cookie
@@ -151,7 +150,7 @@ class CartMiddleware:
             # instance.  No need to save yet.
             cart = Cart(site=site)
 
-        # Cache cart instance for the during of this request
+        # Cache cart instance for the duration of this request
         request._cart_cache = cart
 
         if num_carts_merged > 0:

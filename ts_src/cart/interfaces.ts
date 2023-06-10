@@ -1,3 +1,5 @@
+import {step} from "../checkout/components/CheckoutStep";
+
 export interface IButtonStatus {
     text: string;
     enabled: boolean;
@@ -37,18 +39,38 @@ export interface ICart {
     loaded?: boolean;
     status: string;
     lines: IRowProps[];
-    payment_partner: IPartner;
     open: boolean;
     id: number;
+    site: string;
+
     subtotal: string;
     final_tax: string;
+    final_ship: string;
     final_total: string;
     estimated_tax: string;
     estimated_total: string;
     total_paid: string;
     cash_paid: string;
     owner_info?: string;
+    username?: string;
+    email?: string;
+    shipping_address: IAddress;
+    billing_address: IAddress;
+    payment_partner?: IPartner;
+    is_shipping_required: boolean;
+    in_store_pickup_only: boolean;
+    available_pickup_partners: IPartner[];
+    pickup_partner?: IPartner;
+    is_free: boolean;
+    is_account_required: boolean;
+    delivery_method: string;
+    payment_method: string;
     show_status_col: boolean;
+
+    completed_steps: step[];
+    ready_steps: step[];
+    address_error?: any;
+
     discount_code: string;
     discount_code_message: string
 
@@ -63,6 +85,8 @@ export interface IProduct {
 export interface IPartner {
     name: string;
     slug: string;
+    id: string;
+    address_and_hours_info?: string;
 }
 
 export interface IPOSProps {
@@ -71,4 +95,18 @@ export interface IPOSProps {
     pay_in_store_carts?: [ICart];
     pickup_carts?: [ICart];
     url: string;
+}
+
+export interface IAddress {
+    id: number
+    first_name: string
+    last_name?: string
+    line1: string
+    line2: string
+    line3: string
+    line4: string
+    state: string
+    country: string
+    postcode: string
+    phone_number: string
 }

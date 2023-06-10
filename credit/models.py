@@ -28,4 +28,3 @@ class UserCreditChange(models.Model):
                 self.balance.save()
                 self.applied = True
                 self.save()
-

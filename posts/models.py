@@ -1,7 +1,7 @@
 from django.db import models
 
 # Create your models here.
-from wagtail.core.fields import RichTextField
+from wagtail.fields import RichTextField
 
 
 class Post(models.Model):

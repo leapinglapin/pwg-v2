@@ -12,14 +12,13 @@ class Command(BaseCommand):
         with open('reports/cart_fix_report{}.txt'.format(datetime.date.today().isoformat()), 'a', newline='') as f:
             for cart in Cart.submitted.filter(status__in=[Cart.PAID, Cart.COMPLETED]).order_by('date_paid'):
                 updated = False
-                with transaction.atomic():
-                    for line in cart.lines.filter(price_per_unit_at_submit=None):
-                        try:
-                            line.price_per_unit_at_submit = line.get_price()
-                            line.save()
-                            updated = True
-                        except Exception:
-                            pass
+                for line in cart.lines.filter(price_per_unit_at_submit=None):
+                    try:
+                        line.price_per_unit_at_submit = line.get_price()
+                        line.save()
+                        updated = True
+                    except Exception:
+                        pass
                 if updated:
                     log(f, "Cart {} has a new subtotal of {} and was originally charged {}"
                         .format(cart.id,

@@ -11,7 +11,7 @@
 
     {% preload_cart_into_redux_store cart %}
     {% react_render component="CartFull" identifier="cart_full" %}
-    <a href="{% url 'checkout_start' %}">
+    <a href="{% url 'checkout_react' %}">
         <button type="button" class="btn btn-primary">Start Checkout</button>
     </a>
 

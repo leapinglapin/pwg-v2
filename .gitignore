@@ -28,10 +28,4 @@ node_modules/
 .python-version
 .nvmrc
 m1_mac_env_setup.sh
-/yaml/shopcgt-secrets
-
-
-# Ignore text reports
-/reports/*
-
 

@@ -22,11 +22,11 @@ from django.conf import settings
 from django.conf.urls.static import static
 
 from wagtail.admin import urls as wagtailadmin_urls
-from wagtail.core import urls as wagtail_urls
+from wagtail import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 urlpatterns = [
-                  path('', include('cgtinfo.urls')),
+                  path('', include('home_and_info.urls')),
                   path('', include('game_info.urls')),
                   path('accounts/orders/', include('checkout.urls-orders')),
                   path('accounts/profile/', account_summary, name="account_summary"),
@@ -37,14 +37,11 @@ urlpatterns = [
                   path('shop/', include('shop.urls')),
                   path('download/', include('digitalitems.urls-download')),
                   path('admin/', admin.site.urls),
-                  path('packs/', include('subscriptions.urls')),
 
                   path('partner/<slug:partner_slug>/intake/', include('intake.urls')),
-                  path('partner/<slug:partner_slug>/subscription/', include('subscriptions.urls-partner')),
                   path('partner/<slug:partner_slug>/inv_report/', include('inventory_report.urls')),
                   path('partner/', include('user_list.urls-partner')),
                   # Handle slug in individual urls so we don't have issues
-                  path('partner/<slug:partner_slug>/packs/', include('packs.urls-partner')),
 
                   path('partner/', include('partner.urls')),
 

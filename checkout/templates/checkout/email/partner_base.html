@@ -14,7 +14,7 @@
         <tr>
             <td>
                 {% if order.owner %}
-                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=order.owner.id %}">
+                    <a href="{% site_url order %}{% url 'partner_customer_details' partner_slug=partner.slug user_id=order.owner.id %}">
                         {{ order.owner.username }}
                     </a>
                 {% endif %}
@@ -27,7 +27,7 @@
                 {% endif %}
             </td>
             <td>
-                <a href="{% site_url cart %}{% url 'partner_order_details' partner_slug=partner.slug cart_id=order.id %}">
+                <a href="{% site_url order %}{% url 'partner_order_details' partner_slug=partner.slug cart_id=order.id %}">
                     {{ order.id }}
                 </a>
             </td>

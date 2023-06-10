@@ -16,31 +16,97 @@
         <ul>
             {% for location in locations %}
                 <li>
-                    <a href="{% url "report_location" partner_slug=partner.slug report_id=report.id location_id=location.id %}">{{ location }}</a>
+                    <a href="{% url "report" partner_slug=partner.slug report_id=report.id location_id=location.id %}">{{ location }}</a>
                 </li>
             {% endfor %}
         </ul>
 
     {% endif %}
-    <br>
-    <table>
+    <h3>Add Item (Or Scan):</h3>
+    <label>
+        Barcode:
+        <input type="text" id="barcode"/>
+    </label>
+    <input type="submit" value="Add" onclick="HandleAdd()"/>
+    <h3>Scanned this session:</h3>
+    <table id="this_session" class="table">
+        <tr>
+            <th>Timestamp</th>
+            <th>Barcode</th>
+            <th>Success</th>
+            <th>Product</th>
+            <th>Inventory</th>
+
+        </tr>
+    </table>
+    <table class="table">
         <tr>
             <th>Timestamp</th>
             <th>Barcode</th>
             <th>Location</th>
+            <th>Delete</th>
         </tr>
         {% for line in lines %}
             <tr>
                 <td>{{ line.timestamp }}</td>
                 <td>{{ line.barcode }}</td>
                 <td>{{ line.location }}</td>
+                <td>
+
+                    <a href="
+                    {% if location %}
+                    {% url "delete_inv_report_line" partner_slug=partner.slug report_id=report.id location=location.id report_line_id=line.id confirm=0 %}
+                    {% else %}
+                    {% url "delete_inv_report_line" partner_slug=partner.slug report_id=report.id report_line_id=line.id confirm=0 %}
+                    {% endif %}
+"
+                    >Delete
+                    </a>
+                </td>
             </tr>
         {% endfor %}
     </table>
 
-
-    <p>Refresh the page to view scanned lines</p>
     <script>
+        function HandleAdd() {
+            AddItem(document.getElementById("barcode").value)
+        }
+
+        function AddItem(sCode) {
+            let url = "/partner/{{ partner.slug }}/inv_report/{{ report.id }}/"
+            {% if location %}
+                url += "{{ location.id }}/"
+            {% endif %}
+            const table = document.getElementById("this_session")
+            const row = table.insertRow(1)
+            const date_cell = row.insertCell()
+            date_cell.innerText = (new Date()).toString()
+            const barcode_cell = row.insertCell()
+            barcode_cell.innerText = sCode
+            fetch(url + "add/" + sCode + "/").then(response => response.json()).then((data) => {
+                    console.log(data)
+                    if (data.hasOwnProperty('success')) {
+                        row.insertCell().innerText = data.success
+                    } else {
+                        row.insertCell().innerText = "Failure"
+                    }
+                    if (data.hasOwnProperty('product')) {
+                        let link = document.createElement("a")
+                        link.href = `/shop/manage/{{ partner.slug }}/product/${data.product.slug}/`
+                        link.innerText = data.product.name
+                        row.insertCell().appendChild(link)
+                    } else {
+                        row.insertCell().innerText = "No Product"
+                    }
+                    if (data.hasOwnProperty('item')) {
+                        row.insertCell().innerText = `${data.item.count} in inventory`
+                    } else {
+                        row.insertCell().innerText = "No Inventory Item"
+                    }
+                }
+            )
+        }
+
         onScan.attachTo(document, {
             keyCodeMapper: function (oEvent) {
                 if (oEvent.which == 189) {
@@ -54,17 +120,8 @@
             avgTimeByChar: 60, //Slowed down for newer scanner
             onScan: function (sCode, iQty) { // Alternative to document.addEventListener('scan')
                 console.log('Scanned: ' + iQty + 'x ' + sCode);
-                let url = "/partner/{{ partner.slug }}/inv_report/{{ report.id }}/"
-                {% if location %}
-                    url += "{{ location.id }}/"
-                {% endif %}
-                fetch(url + "add/" + sCode + "/")
+                AddItem(sCode)
             },
-            {% comment %}
-                    onKeyDetect: function (iKeyCode) { // output all potentially relevant key events - great for debugging!
-                       console.log('Pressed: ' + iKeyCode);
-                   }
-           {% endcomment %}
         });
     </script>
 

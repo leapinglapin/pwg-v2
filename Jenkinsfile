@@ -8,18 +8,18 @@ node {
         echo 'Building...'
         nodeImage = docker.image('node:12.22.7')
         nodeImage.inside('-v /output/:/output/ -u root'){
-            sh 'rm -r ./tailwind/static/* ./shopcgt/static/js/cgt/* ./static/* || true'
+            sh 'rm -r ./tailwind/static/* ./opencgat/static/js/cgt/* ./static/* || true'
             sh 'rm -r /output/css/* /output/js/* || true'
             sh 'yarn install'
             sh 'yarn build'
             sh 'cp -r ./tailwind/static/css/ /output/css/'
-            sh 'cp -r ./shopcgt/static/js/cgt/ /output/js/'
+            sh 'cp -r ./opencgat/static/js/cgt/ /output/js/'
         }
-        djangoImage = docker.build("registry.digitalocean.com/cgt/shopcgt:${env.BUILD_ID}")
+        djangoImage = docker.build("registry.digitalocean.com/cgt/opencgat:${env.BUILD_ID}")
         djangoImage.inside('-v /output/:/output/ -u root'){
-            sh 'mkdir -p shopcgt/static/js/cgt/'
-            sh 'cp -r /output/css/ shopcgt/static/css/'
-            sh 'cp -r /output/js/ shopcgt/static/js/cgt/'
+            sh 'mkdir -p opencgat/static/js/cgt/'
+            sh 'cp -r /output/css/ opencgat/static/css/'
+            sh 'cp -r /output/js/ opencgat/static/js/cgt/'
         }
     }
     stage('Test') {

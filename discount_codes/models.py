@@ -42,8 +42,9 @@ class DiscountCode(models.Model):
         :param cart:
         :return:
         """
-        if datetime.datetime.now().replace(tzinfo=utc) > self.expires_on:
+        if self.expires_on and datetime.datetime.now().replace(tzinfo=utc) > self.expires_on:
             cart.discount_code_message = "The code '{}' has expired".format(self)
+            cart.discount_code = None
             cart.save()
             return False
         if self.once_per_customer:
@@ -73,10 +74,10 @@ class DiscountCode(models.Model):
                 line.discount_code_message = "The code '{}' requires {} to activate".format(self,
                                                                                             self.min_cart_for_discount)
                 break  # exit loop, saving message, returning false
-            if (self.exclude_publishers and self.publishers.filter(id=line.item.publisher.id)) or (
-                    self.restrict_to_publishers and not self.publishers.filter(id=line.item.publisher.id)):
+            if (self.exclude_publishers and self.publishers.filter(id=line.item.product.publisher.id)) or (
+                    self.restrict_to_publishers and not self.publishers.filter(id=line.item.product.publisher.id)):
                 line.discount_code_message = "The code '{}' is not applicable to items from {}".format(self,
-                                                                                                       line.item.publisher)
+                                                                                                       line.item.product.publisher)
                 break
             line.discount_code_message = None
             line.save()

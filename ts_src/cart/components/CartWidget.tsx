@@ -42,9 +42,7 @@ const CartWidget: React.FunctionComponent<ICart> = (props: ICart): JSX.Element =
             >
                 <Popover id="CartButton">
                     <Popover.Title>
-                        <Button href={"/cart/"}>Cart Contents</Button>
-                        &nbsp;
-                        <Button href={"/checkout/"}>Checkout</Button>
+                        <Button href={"/checkout/v2/"}>Checkout</Button>
                     </Popover.Title>
 
                     <Popover.Content>

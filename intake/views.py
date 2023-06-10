@@ -79,24 +79,8 @@ def intake_item_view(request, barcode, partner_slug):
         except InventoryItem.DoesNotExist:
             pass
 
-        if partner.uses_square:
-            found_square = False
-            if local_item:
-                try:
-                    sqitem = local_item.squareinventoryitem
-                    found_square = True
-                    print("Found square item")
-                except Exception as e:
-                    print(e)
-                if not found_square:
-                    sqitem = partner.squarelink.get_item_from_barcode(barcode)
-                    print("Grabbed square item from barcode")
-            else:
-                #    TODO: If local item doesn't exist but square item does, create one
-                pass
-            sqitem.update_local_details()
         if local_item:
-            print(local_item)
+            reason = "Intake (no purchase order)"
             if add_mode:
                 if po_id and po_id != 'None':
                     po, created = PurchaseOrder.objects.get_or_create(partner=partner, po_number=po_id,
@@ -105,10 +89,12 @@ def intake_item_view(request, barcode, partner_slug):
                         po_item, po_item_created = POLine.objects.get_or_create(po=po, barcode=barcode)
                         po_item.received_quantity += quantity
                         po_item.save()
+                        reason = "Intake: {}".format(po)
                     except Exception as e:
                         print(e)
                 # adjust inventory
-                count = local_item.adjust_inventory(quantity, reason="Scanned by intake app")
+                local_item.adjust_inventory(quantity, reason=reason)
+                count = local_item.get_inventory()
             else:
                 count = local_item.get_inventory()
             if auto_print:
@@ -118,13 +104,12 @@ def intake_item_view(request, barcode, partner_slug):
                 add_mode = 3
     context = {
         'refresh_form': RefreshForm(partner=partner),
-        'add_form': AddForm(instance=local_product),
+        'add_form': AddForm(instance=local_product, partner=partner),
         'add_item_form': AddInventoryItemForm(instance=local_item, partner=partner, product=local_product),
         'dist_items': dist_items,
         'local_product': local_product,
         'local_item': local_item,
         'square_item': sqitem,
-        'square_enabled': partner.uses_square,
         'count': count,
         'add_mode': add_mode,
         'mfc_guess': mfc_guess,
@@ -155,27 +140,19 @@ def create_endpoint(request, partner_slug, barcode):
             product = Product.objects.get(barcode=barcode)
         except Product.DoesNotExist:
             product = None
-        form = AddForm(request.POST, instance=product)
+        form = AddForm(request.POST, instance=product, partner=partner)
         if form.is_valid():
             print("Form Valid")
             our_price = form.cleaned_data['our_price']
-            if partner.uses_square:
-                pass
-                # TODO: re-implement square
-                # if partner.squarelink.add_new_square_item(name=name, price=our_price.amount, sku=barcode, category=None):
-                #     return HttpResponse(status=201)
-                # else:
-                #     return HttpResponseBadRequest()
-            else:
-                try:
-                    new_product = form.save(commit=False)
-                    new_product.all_retail = True
-                    new_product.save()
-                    item = InventoryItem.objects.create(product=new_product, partner=partner, price=our_price,
-                                                        default_price=our_price)
-                    item.save()
-                except Product.DoesNotExist:
-                    return HttpResponse(status=201)
+            try:
+                new_product = form.save(commit=False)
+                new_product.all_retail = True
+                new_product.save()
+                item = InventoryItem.objects.create(product=new_product, partner=partner, price=our_price,
+                                                    default_price=our_price)
+                item.save()
+            except Product.DoesNotExist:
+                return HttpResponse(status=201)
         else:
             print("FORM INVALID")
             print(form.errors)

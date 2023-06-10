@@ -15,8 +15,6 @@ from digitalitems.models import DigitalItem
 from partner.forms import FiltersForm, DiscountForm, BanForm, StaffLogPaymentForm
 from partner.models import Partner, get_partner_or_401, PartnerTransaction
 from shop.models import Item
-from subscriptions.forms import GrantManualAccessForm, RevokeManualAccessForm
-from subscriptions.models import SubscriptionCampaign
 
 
 def partner_info(request, partner_slug):
@@ -232,8 +230,6 @@ def customer_details(request, partner_slug, user_id):
         'customer': customer,
         'orders': orders.filter(owner=customer),
         'items': DigitalItem.objects.filter(downloads__user=customer, partner__slug=partner_slug),
-        'grant_manual_access_form': GrantManualAccessForm(partner=partner),
-        'revoke_manual_access_form': RevokeManualAccessForm(partner=partner),
         'banform': BanForm(instance=customer),
         'campaigns': campaigns
     }
@@ -248,13 +244,11 @@ def admin_customer_details(request, user_id):
         if form.is_valid():
             form.save()
     orders = Cart.objects.filter(owner=customer).distinct().order_by('date_submitted')
-    campaigns = {}
     context = {
         'customer': customer,
         'orders': orders,
         'items': DigitalItem.objects.filter(downloads__user=customer),
         'banform': BanForm(instance=customer),
-        'campaigns': campaigns,
         'admin': True,
     }
     return render(request, "partner/customer_details.html", context)

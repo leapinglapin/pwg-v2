@@ -19,7 +19,7 @@ class SubmittedCartManager(models.Manager):
     """For searching/creating SUBMITTED carts only."""
     use_in_migrations = True
     # Delivered is in this list for legacy purposes, as there are a few floating around the db.
-    status_filter = ["Submitted", "Paid", "Completed", "Shipped", "Cancelled", "Delivered"]
+    status_filter = ["Processing", "Submitted", "Paid", "Completed", "Shipped", "Cancelled", "Delivered"]
 
     def get_queryset(self):
         return super().get_queryset().filter(

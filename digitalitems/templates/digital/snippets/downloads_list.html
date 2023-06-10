@@ -14,8 +14,8 @@
                                         <a href="{% url 'product_detail' product_slug=di.product.slug %}">
                                     {% endif %}
                                     <img class='w-full h-full object-cover rounded-t-md xl:rounded-t-none'
-                                         src="{{ di.product.main_image.image.url }}"
-                                         alt="{{ di.product.main_image.alt_text }}">
+                                         src="{{ di.product.primary_image.image_url }}"
+                                         alt="{{ di.product.primary_image.alt_text }}">
                                     {% if prod_visible %}
                                         </a>
                                     {% endif %}

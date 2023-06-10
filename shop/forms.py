@@ -2,13 +2,13 @@ from django import forms
 from django.contrib.admin.widgets import AdminDateWidget
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
+from django.forms import widgets
 from djmoney.forms import MoneyField
 from treewidget.fields import TreeModelMultipleChoiceField
 
 from game_info.models import Game, Faction
 from partner.models import Partner
-from shop.models import Product, ProductImage, Item, Category, MadeToOrder, InventoryItem, CustomChargeItem, Publisher
-from django.forms import widgets
+from shop.models import Product, Item, Category, MadeToOrder, InventoryItem, CustomChargeItem, Publisher
 
 
 class AddProductForm(forms.ModelForm):
@@ -25,18 +25,47 @@ class AddProductForm(forms.ModelForm):
 
     class Meta:
         model = Product
-        fields = ['name', 'page_is_draft',
+        fields = ['name', 'page_is_draft', 'page_is_template', 'all_retail',
                   'release_date', 'visible_on_release', 'purchasable_on_release', 'listed_on_release',
                   'preorder_or_secondary_release_date',
                   'visible_on_preorder_secondary', 'purchasable_on_preorder_secondary', 'listed_on_preorder_secondary',
                   'description',
-                  'categories', 'barcode', 'msrp', 'map', 'weight', 'in_store_pickup_only',
-                  'games', 'editions', 'formats', 'factions', 'attributes', 'publisher', 'all_retail'
+                  'publisher',
+                  'barcode', 'publisher_sku', 'publisher_short_sku',
+                  'msrp', 'map',
+                  'weight', 'in_store_pickup_only',
+                  'categories',
+                  'games', 'editions', 'formats', 'factions', 'attributes',
                   ]
         widgets = {
             'release_date': AdminDateWidget(),
             'preorder_or_secondary_release_date': AdminDateWidget()
         }
+
+    def __init__(self, *args, **kwargs):
+        partner = kwargs.pop('partner')
+        super().__init__(*args, **kwargs)
+        if not partner.retail_partner:
+            # Remove all these retail only fields
+            self.fields.pop('barcode')
+            self.fields.pop('publisher_sku')
+            self.fields.pop('publisher_short_sku')
+            self.fields.pop('map')
+            self.fields.pop('weight')
+            self.fields.pop('in_store_pickup_only')
+            self.fields.pop('all_retail')
+
+
+class RelatedProductsForm(forms.ModelForm):
+    replaced_by = forms.ModelChoiceField(Product.objects.filter(all_retail=True).order_by('name'),
+                                         required=False)
+    contains_product = forms.ModelChoiceField(Product.objects.filter(all_retail=True).order_by('name'),
+                                              required=False)
+
+    class Meta:
+        model = Product
+        fields = ['replaced_by', 'contains_product', 'contains_number',
+                  ]
 
 
 class AddInventoryItemForm(forms.ModelForm):
@@ -53,12 +82,6 @@ class AddInventoryItemForm(forms.ModelForm):
             self.fields['price'].initial = product.get_price_from_rule(partner)
             self.fields['default_price'].initial = product.get_price_from_rule(
                 partner)
-
-
-class UploadImage(forms.ModelForm):
-    class Meta:
-        model = ProductImage
-        fields = ['image', 'alt_text']
 
 
 def invert_order_string(order_str):
@@ -127,13 +150,15 @@ class FiltersForm(forms.Form):
             self.fields['out_of_stock_only'].initial = False
             self.fields['sold_out_only'] = forms.BooleanField(required=False)
             self.fields['sold_out_only'].initial = False
+            self.fields['templates'] = forms.BooleanField(required=False)
+            self.fields['templates'].initial = False
 
 
 class AddMTOItemForm(forms.ModelForm):
     class Meta:
         model = MadeToOrder
         fields = ['needs_quote', 'digital_purchase_necessary', 'approx_lead', 'current_inventory', 'price',
-                  'default_price']
+                  'default_price', 'external_url']
 
 
 class CreateCustomChargeForm(forms.ModelForm):

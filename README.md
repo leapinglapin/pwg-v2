@@ -48,3 +48,8 @@ python manage.py createsuperuser
 python manage.py runserver
 ```
 
+### 8. Run dev server
+
+Through the admin ui (url:8000/admin) add a partner, otherwise pages won't be able to serialize the cart.
+Through the CMS (url:8000/cms) add a homepage.
+

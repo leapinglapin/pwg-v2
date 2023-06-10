@@ -23,10 +23,15 @@ class Downloads(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='downloads')
     date = models.DateTimeField()
     partner_paid = models.BooleanField(default=False)
-    added_from_subscription_pack = models.ForeignKey('subscriptions.SubscriptionPack',
-                                                     on_delete=models.SET_NULL, null=True)
-    added_from_digital_pack = models.ForeignKey('packs.DigitalPack', on_delete=models.SET_NULL, null=True)
     added_from_cart = models.ForeignKey('checkout.Cart', on_delete=models.PROTECT, null=True)
+
+    timestamp_added = models.DateTimeField(
+        auto_now_add=True, blank=True,
+        null=True)  # May differ from date as date will often be from pledge or cart purchase.
+    # Null values are from before the value was added to the database
+
+    skip_billing = models.BooleanField(default=False)  # Skip billing events before campaign billing start date
+    billing_event = models.ForeignKey("billing.BillingEvent", on_delete=models.SET_NULL, null=True, blank=True)
 
     def __str__(self):
         return self.user.email + " " + str(self.item) + " " + str(self.date) + " (" + str(self.id) + ")"
@@ -301,8 +306,8 @@ class Downloadable(MPTTModel):
         :return: None
         """
         for parent in self.get_ancestors():
-            # There should never be a situation where this happens in the past
-            # so we don't need to check if date
+            # There should never be a situation where this happens in the past,
+            # so we don't need to check which date is most recent.
             parent.download_history.create(user=user)
         self.download_history.create(user=user)
 
@@ -324,6 +329,10 @@ class Downloadable(MPTTModel):
 
 
 class UserDownloadableHistory(models.Model):
+    """
+    This is a record of every time a user has downloaded a file, folder, or any file in that folder.
+    Used to inform the user on if a download is new.
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="downloadable_history")
     downloadable = models.ForeignKey(Downloadable, on_delete=models.CASCADE, related_name="download_history")
     timestamp = models.DateTimeField(default=datetime.now)
@@ -336,6 +345,9 @@ class UserDownloadableHistory(models.Model):
 
 
 class DownloadHistory(models.Model):
+    """
+    This is a record of every time the user has downloaded a file
+    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name="download_history")
     file = models.ForeignKey(DIFile, on_delete=models.CASCADE, related_name="download_history")
     timestamp = models.DateTimeField(auto_now_add=True)

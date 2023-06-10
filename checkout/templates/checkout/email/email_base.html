@@ -1,11 +1,21 @@
 {% load static %}
-{% comment %}<img class="inline h-12"
-     src="{% site_url cart %}{% static 'images/Logo Die Green Cropped.png' %}"
-     alt="logo">
-<br>{% endcomment %}
 {% block content %}
 
 {% endblock %}
+<h3><a href="{% site_url order %}{% url 'past_order_details' cart_id=order.id %}">
+    Order {{ order.id }}
+</a></h3>
+{% if order.public_comments %}
+    <div>
+        <h4>
+            Order Comments
+        </h4>
+        <p>
+            {{ order.public_comments }}
+        </p>
+    </div>
+{% endif %}
+
 <div>
     <table class="table">
         <thead>

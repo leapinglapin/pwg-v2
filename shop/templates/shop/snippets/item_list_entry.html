@@ -9,10 +9,10 @@
         <div class="w-full lg:w-64 h-64 flex-shrink-0">
             <a href="product/{{ product.slug }}/"
                style="text-decoration: none; color: inherit;">
-                {% if product.main_image and first %}
+                {% if product.primary_image and first %}
                     <img class='w-full h-full object-cover rounded-t-md lg:rounded-t-none {% if filtered_items|length > 1 %}lg:rounded-br-md{% endif %}'
-                         src="{{ product.main_image.image.url }}"
-                         alt="{{ product.main_image.alt_text }}">
+                         src="{{ product.primary_image.image_url }}"
+                         alt="{{ product.primary_image.alt_text }}">
                 {% endif %}
             </a>
         </div>
@@ -42,10 +42,16 @@
 
 
 
+
+
+
                                     {% else %}{% if all_items|length > filtered_items|length %} order-first" title="This item has additional item types available. Enter the product page to view.{% endif %}{% endif %}"></i>
                             {% endif %}
                             {% if itemIcon|is_download_item %}
                                 <i title="Digital item" class="fas fa-download {% if itemIcon == item %}text-gray-600
+
+
+
 
 
 
@@ -59,6 +65,9 @@
                             {% if itemIcon|is_mto_item %}
                                 <i title="Made-to-order item"
                                    class="fas fa-hammer {% if itemIcon == item %}text-gray-600
+
+
+
 
 
 
@@ -134,13 +143,26 @@
                     {% include 'shop/snippets/discounted_price.html' with item=all_items|mto_items|cheapest_item %}
                 </p>
             {% elif item %}
-                    <p>
-                        <!-- <i class="fas fa-hammer"></i> -->
-                        {% include 'shop/snippets/discounted_price.html' %}
+                <p>
+                <!-- <i class="fas fa-hammer"></i> -->
+                {% include 'shop/snippets/discounted_price.html' %}
             {% endif %}
             {% if not manage %}
                 {% if not item|purchased:user %}
-                    {% react_render component="AddToCartButton" props=item %}
+                    {% if item.external_url %}
+                        <a href="{{ item.external_url }}">
+                        <h1 class="bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 inline-flex items-center
+                                                    justify-center px-6 py-3 border border-transparent text-xl
+                                                    font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2
+                                                    focus:ring-offset-2 w-full">
+                            External Shop
+                            <i class="fas fa-arrow-up-right-from-square"></i>
+
+                        </h1>
+                        </a>
+                    {% else %}
+                        {% react_render component="AddToCartButton" props=item %}
+                    {% endif %}
                 {% else %}
                     {% if item|is_download_item %}
                         <a href="product/{{ product.slug }}/"

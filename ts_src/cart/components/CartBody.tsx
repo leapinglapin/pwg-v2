@@ -38,12 +38,19 @@ const CartBody: React.FunctionComponent<ICartBodyProps> = (props: ICartBodyProps
     const balance_string = "$" + (remaining_balance.toFixed(2))
     const balance_label = remaining_balance >= 0 ? "Balance" : "Change";
 
-    const total_label = props.cart.final_total ? "Final Total" : "Estimated Total";
-    const total_string = "$" + Number(props.cart.final_total ? props.cart.final_total : props.cart.estimated_total).toFixed(2);
+    const has_final_total = props.cart.final_total != null
+    const total_label = has_final_total ? "Final Total" : "Estimated Total";
+    const total_string = "$" + Number(has_final_total ? props.cart.final_total : props.cart.estimated_total).toFixed(2);
 
-    const has_final_tax = Number(props.cart.final_tax) > 0
+    const has_final_tax = props.cart.final_tax != null
     const tax_label = has_final_tax ? "Final Tax" : "Estimated Tax";
     const tax_string = "$" + Number(has_final_tax ? props.cart.final_tax : props.cart.estimated_tax).toFixed(2);
+
+    const is_shipping_required = props.cart.is_shipping_required;
+    const has_final_shipping = props.cart.final_ship != null
+    const shipping_string = has_final_shipping ? "$" + (Number(props.cart.final_ship).toFixed(2)) : "Needs Address";
+
+    const subtotal_string = "$" + (Number(props.cart.subtotal).toFixed(2))
 
     const total_paid_string = "$" + (Number(props.cart.total_paid).toFixed(2))
     const cash_paid_string = "$" + (Number(props.cart.cash_paid).toFixed(2))
@@ -55,6 +62,10 @@ const CartBody: React.FunctionComponent<ICartBodyProps> = (props: ICartBodyProps
 
 
         summary = <>
+            <FooterRow label={"Subtotal"} value={subtotal_string}
+                       empty_cols={num_empty_cols} remove_col={props.cart.open}/>
+            {is_shipping_required && <FooterRow label={"Shipping"} value={shipping_string}
+                                                empty_cols={num_empty_cols} remove_col={props.cart.open}/>}
             <FooterRow label={tax_label} value={tax_string}
                        empty_cols={num_empty_cols} remove_col={props.cart.open}/>
             <FooterRow label={total_label} value={total_string}

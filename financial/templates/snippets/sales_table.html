@@ -1,0 +1,36 @@
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">ID</th>
+        <th scope="col">Timestamp</th>
+        <th scope="col">User</th>
+        <th scope="col">Email</th>
+        <th scope="col">Subtotal</th>
+        <th scope="Col">Collected from Customer</th>
+        <th scope="col">Collected Shipping</th>
+        <th scope="col">Collected Tax</th>
+
+
+    </tr>
+    </thead>
+    {% for cart in carts %}
+        <tr>
+            <td>{{ cart.id }}</td>
+            <td>{{ cart.timestamp }}</td>
+            <td>
+                {% if cart.user %}
+                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=cart.user.id %}">
+                        {{ cart.user }}
+                    </a>
+                {% endif %}
+            </td>
+            <td>{{ cart.email }}</td>
+            <td>{% if cart.subtotal %}{{ cart.subtotal }}{% endif %}</td>
+            <td>{% if cart.final_total %}{{ cart.final_total }}{% endif %}</td>
+            <td>{% if cart.final_ship %}{{ cart.final_ship }}{% endif %}</td>
+            <td>{% if cart.cart_final_tax %}{{ cart.final_tax }}{% endif %}</td>
+
+        </tr>
+    {% endfor %}
+
+</table>
