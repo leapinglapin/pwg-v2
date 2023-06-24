@@ -475,13 +475,6 @@ class Item(RepresentationMixin, PolymorphicModel):
             return self.price
 
         min_price = self.price
-        if user is not None and user.is_authenticated:
-            for campaign in self.partner.campaigns.all():
-                for discount in campaign.discounts.all():
-                    candidate = self.default_price * discount.get_discount_multiplier(user)
-                    if candidate < min_price:
-                        min_price = candidate
-
         return min_price
 
     def button_status(self, cart=None):
