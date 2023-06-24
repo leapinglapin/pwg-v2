@@ -868,7 +868,9 @@ class Cart(RepresentationMixin, models.Model):
 
     def to_react_representation(self, context={}):
         from .serializers import CartSerializer
-        return CartSerializer(self).data
+        if self.id:
+            return CartSerializer(self).data
+        return json.dumps({})
 
     def create_purchases(self):
         if self.is_paid:

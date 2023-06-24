@@ -47,7 +47,7 @@ class ItemSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_is_pay_what_you_want(item):
-        if isinstance(item, DigitalItem) or isinstance(item, PackItem):
+        if isinstance(item, DigitalItem):
             return item.pay_what_you_want
         else:
             return False
