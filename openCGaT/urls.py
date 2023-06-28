@@ -26,8 +26,6 @@ from wagtail import urls as wagtail_urls
 from wagtail.documents import urls as wagtaildocs_urls
 
 urlpatterns = [
-                  path('', include('home_and_info.urls')),
-                  path('', include('game_info.urls')),
                   path('accounts/orders/', include('checkout.urls-orders')),
                   path('accounts/profile/', account_summary, name="account_summary"),
                   path('accounts/profile/', include('digitalitems.urls-account')),
