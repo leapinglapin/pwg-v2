@@ -15,7 +15,7 @@ DATABASES = {
         'HOST': os.getenv("PSQL_HOST"),
         'PORT': os.getenv("PSQL_PORT"),
         'TEST': {
-            'NAME': "opencat_test_db",
+            'NAME': "opencgat_test_db",
         },
     }
 }
