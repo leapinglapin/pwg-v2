@@ -8,7 +8,7 @@ node {
         echo 'Building...'
         nodeImage = docker.image('node:12.22.7')
         nodeImage.inside('-v /output/:/output/ -u root'){
-            sh 'rm -r ./tailwind/static/* ./opencgat/static/js/cgt/* ./static/* || true'
+            sh 'rm -r ./tailwind/static/* ./opencgat/static/js/* ./static/* || true'
             sh 'rm -r /output/css/* /output/js/* || true'
             sh 'yarn install'
             sh 'yarn build'
@@ -25,7 +25,7 @@ node {
     stage('Test') {
         echo 'Testing...'
         //test npm here
-        withCredentials([file(credentialsId: 'prod.env', variable: 'env_file')]){
+        withCredentials([file(credentialsId: 'jenkins.env', variable: 'env_file')]){
             djangoImage.inside('-u root --env-file $env_file'){
                 sh 'cd /app/'
                 sh './manage.py test --no-input --keepdb'
@@ -43,7 +43,7 @@ node {
             djangoImage.push('latest')
         }
         // Run migrations on the database
-        withCredentials([file(credentialsId: 'prod.env', variable: 'env_file')]){
+        withCredentials([file(credentialsId: 'jenkins.env', variable: 'env_file')]){
             djangoImage.inside('-u root --env-file $env_file'){
                 sh 'cd /app/'
                 sh './manage.py migrate'
