@@ -33,9 +33,6 @@
             </nav>
         {% endif %}
         <nav class="nav-item">
-            <a class="nav-link" href="{% url 'manage_tokens' partner_slug=partner|slugify %}">Tokens</a>
-        </nav>
-        <nav class="nav-item">
             <a class="nav-link" href="{% url 'partner_orders' partner_slug=partner|slugify %}?&status=Processing&status=Submitted&status=Paid">Orders</a>
         </nav>
         <nav class="nav-item">
