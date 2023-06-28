@@ -11,7 +11,7 @@ venv
 node_modules/
 
 #Ignore compiled javascript files
-/openCGaT/static/js/cgt/
+/openCGaT/static/js/
 
 #Ignore uploaded files
 /media/**
