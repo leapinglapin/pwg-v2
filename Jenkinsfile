@@ -49,6 +49,6 @@ node {
                 sh './manage.py migrate'
             }
         }
-        sh 'doctl apps create-deployment ${params.doappcluserid}'
+        sh "doctl apps create-deployment ${params.doappcluserid}"
     }
 }
