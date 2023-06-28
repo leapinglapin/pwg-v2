@@ -10,17 +10,6 @@
             <a class="nav-link" href="{% url 'create_new_product' partner_slug=partner|slugify %}">Create New
                 Products</a>
         </nav>
-        {% if partner.digital_partner %}
-            <nav class="nav-item">
-                <a class="nav-link" href="{% url 'manage_pack_products' partner_slug=partner|slugify %}">Packs</a>
-            </nav>
-        {% endif %}
-        {% if partner.crowdfunding_features %}
-
-            <nav class="nav-item">
-                <a class="nav-link" href="{% url 'manage_lists' partner_slug=partner|slugify %}">Lists</a>
-            </nav>
-        {% endif %}
         {% if partner.retail_partner %}
             <nav class="nav-item">
                 <a class="nav-link" href="{% url 'intake_home' partner_slug=partner|slugify %}">Intake</a>
@@ -43,22 +32,8 @@
                 </a>
             </nav>
         {% endif %}
-
-        {% if partner.campaigns.count > 0 %}
-            <nav class="nav-item">
-                <a class="nav-link"
-                   href="{% url 'manage_subscriptions' partner_slug=partner|slugify %}">Subscriptions</a>
-            </nav>
-        {% endif %}
         <nav class="nav-item">
-            <a class="nav-link" href="{% url 'manage_tokens' partner_slug=partner|slugify %}">Tokens</a>
-        </nav>
-        <nav class="nav-item">
-
-            <a class="nav-link" href="{% url 'partner_billing' partner_slug=partner|slugify %}">Billing</a>
-        </nav>
-        <nav class="nav-item">
-            <a class="nav-link" href="{% url 'partner_orders' partner_slug=partner|slugify %}">Orders</a>
+            <a class="nav-link" href="{% url 'partner_orders' partner_slug=partner|slugify %}?&status=Processing&status=Submitted&status=Paid">Orders</a>
         </nav>
         <nav class="nav-item">
             <a class="nav-link" href="{% url 'partner_customer_list' partner_slug=partner|slugify %}">Customers</a>

@@ -7,10 +7,22 @@
 {% endblock %}
 {% block content %}
 
-    <br>
-    {% for report in reports %}
-        <a href="{% url 'report' partner_slug=partner.slug report_id=report.id %}">{{ report }}</a>
-    {% endfor %}
+    <h1>Inventory Reports</h1>
+    <table class="table">
+        <tr>
+            <th>Date</th>
+            <th>Report</th>
+
+        </tr>
+        {% for report in reports %}
+            <td>{{ report.date }}</td>
+            <td>
+                <a href="{% url 'report' partner_slug=partner.slug report_id=report.id %}">{{ report }}</a>
+            </td>
+
+        {% endfor %}
+    </table>
+
 
 
 {% endblock %}

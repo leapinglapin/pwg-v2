@@ -10,7 +10,7 @@ from django.shortcuts import get_object_or_404
 from django.template.defaultfilters import slugify
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
-from wagtail.core.fields import RichTextField
+from wagtail.fields import RichTextField
 
 import realaddress.abstract_models
 
@@ -81,15 +81,6 @@ class Partner(models.Model):
         #         or isinstance(item, apps.get_model('shop', 'MadeToOrder')):
         return self.phys_cut
 
-    @property
-    def uses_square(self):
-        from django.core.exceptions import ObjectDoesNotExist
-        try:
-            square = self.squarelink
-            return True
-        except ObjectDoesNotExist:
-            return False
-
 
 class PartnerAddress(realaddress.abstract_models.AbstractPartnerAddress):
     pass
@@ -137,7 +128,6 @@ class PartnerTransaction(models.Model):
     def cart(self):
         try:
             Cart = apps.get_model('checkout', 'Cart')
-            print(Cart)
             return Cart.submitted.filter(partner_transactions=self).first()
         except Exception as e:
             print(e)
@@ -229,6 +219,27 @@ class PartnerTransaction(models.Model):
             return "{0} {1} {2} Summary from {3}".format(self.partner.name, self.type, self.partner_cut,
                                                          self.timestamp)
         return "{0} {1} {2} {3}".format(self.partner.name, self.type, self.partner_cut, self.timestamp)
+
+    def migrate_to_billing_event(self):
+        """
+        Take a partner transaction and create a  billing event from it.
+        :return:  Migrated object, or none if a billing summary
+        """
+        if self.is_summary:
+            return None
+        from billing.models import BillingEvent
+        be = BillingEvent.objects.get_or_create(migrated_from=self,
+                                                timestamp=self.created_timestamp)
+        if self.type == self.PURCHASE:
+            be.type = BillingEvent.COLLECTED_FROM_CUSTOMER
+            # TODO: Add Cart information
+        elif self.type == self.PAYMENT:
+            if self.transaction_subtotal > 0:
+                be.type = BillingEvent.PAYMENT
+            if self.transaction_subtotal < 0:
+                be.type = BillingEvent.PAYOUT
+        be.save()
+        return be
 
 
 def get_partner(request, manage_partner_slug=None, objects=None):

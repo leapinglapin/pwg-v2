@@ -1,8 +1,5 @@
-from django.db import models
 from realaddress.abstract_models import (
     AbstractCountry, AbstractUserAddress)
-
-
 
 
 class RealCountry(AbstractCountry):
@@ -17,5 +14,4 @@ class RealCountry(AbstractCountry):
 class UserAddress(AbstractUserAddress):
     class Meta:
         app_label = "realaddress"
-
 

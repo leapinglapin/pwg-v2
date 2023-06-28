@@ -14,11 +14,7 @@ const primary = {
 };
 
 module.exports = {
-    mode: "jit",
-    purge: {
-        enabled: true,
-        content: ["../../**/*.html", "../../**/*.tsx"],
-    },
+    content: ["../**/*.{html,tsx}"],
     theme: {
         // screens: {
         //   tw: "0px",
@@ -48,13 +44,9 @@ module.exports = {
             },
         },
     },
-    variants: {
-        extend: {},
-    },
     plugins: [
         require("@tailwindcss/forms"),
         require("@tailwindcss/typography"),
-        require("@tailwindcss/line-clamp"),
     ],
     corePlugins: {
         preflight: false,

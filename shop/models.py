@@ -14,7 +14,7 @@ from djmoney.money import Money
 from mptt.models import MPTTModel, TreeForeignKey
 from polymorphic.models import PolymorphicModel
 from polymorphic.query import PolymorphicQuerySet
-from wagtail.core.fields import RichTextField
+from wagtail.fields import RichTextField
 
 from images.models import Image
 from partner.models import Partner
@@ -91,13 +91,20 @@ class ProductQuerySet(PolymorphicQuerySet):
 class Product(PolymorphicModel):
     objects = ProductQuerySet.as_manager()
 
+    # Old image upload, depricated
     main_image = models.ForeignKey('ProductImage', on_delete=models.SET_NULL, blank=True, null=True)
     image_gallery = models.ManyToManyField('ProductImage', blank=True, related_name='partner_images')
+    # End old image upload
+
+    primary_image = models.ForeignKey('images.Image', on_delete=models.SET_NULL, blank=True, null=True)
     attached_images = models.ManyToManyField('images.Image', blank=True, related_name='products')
     partner = models.ForeignKey(Partner, on_delete=models.CASCADE, blank=True, null=True)
     all_retail = models.BooleanField(default=False)
+
     name = models.CharField(max_length=200, unique=True)
     barcode = models.CharField(max_length=20, unique=True, blank=True, null=True)
+    publisher_sku = models.CharField(max_length=30, blank=True, null=True)
+    publisher_short_sku = models.CharField(max_length=10, blank=True, null=True, help_text="GW Short Code")
     weight = models.FloatField(blank=True, null=True)
     in_store_pickup_only = models.BooleanField(default=False)
     publisher = models.ForeignKey(Publisher, on_delete=models.CASCADE, null=True, blank=True)
@@ -150,6 +157,14 @@ class Product(PolymorphicModel):
     attributes = models.ManyToManyField('game_info.Attribute', blank=True)
     contents = models.ManyToManyField('game_info.GamePiece', blank=True)
 
+    replaced_by = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL, related_name='replaces',
+                                    help_text="If there is a  newer version of this product, reference it here")
+
+    contains_product = models.ForeignKey('self', blank=True, null=True, on_delete=models.SET_NULL,
+                                         related_name='contained_in',
+                                         help_text="If this item contains a multiple of another product, list it here")
+    contains_number = models.IntegerField(blank=True, null=True)
+
     def __str__(self):
         return self.name
 
@@ -163,6 +178,10 @@ class Product(PolymorphicModel):
             self.visible_on_release = True
         if self.purchasable_on_preorder_secondary or self.listed_on_preorder_secondary:
             self.visible_on_preorder_secondary = True
+        if self.id:  # Product must exist before we can use M2M relationships
+            if self.attached_images and self.primary_image and not self.attached_images.filter(
+                    id=self.primary_image.id).exists():
+                self.primary_image = None
         super(Product, self).save(*args, **kwargs)
 
     @property
@@ -188,7 +207,7 @@ class Product(PolymorphicModel):
     @property
     def should_be_listed(self):
         return (self.after_release_date and self.listed_on_release) or \
-               (self.after_secondary_date and self.listed_on_preorder_secondary)
+            (self.after_secondary_date and self.listed_on_preorder_secondary)
 
     @property
     def listed(self):
@@ -197,7 +216,7 @@ class Product(PolymorphicModel):
     @property
     def should_be_purchasable(self):
         return (self.after_release_date and self.purchasable_on_release) or \
-               (self.after_secondary_date and self.purchasable_on_preorder_secondary)
+            (self.after_secondary_date and self.purchasable_on_preorder_secondary)
 
     @property
     def purchasable(self):
@@ -206,7 +225,7 @@ class Product(PolymorphicModel):
     @property
     def should_be_visible(self):
         return (self.after_release_date and self.visible_on_release) or \
-               (self.after_secondary_date and self.visible_on_preorder_secondary)
+            (self.after_secondary_date and self.visible_on_preorder_secondary)
 
     @property
     def visible(self):
@@ -444,8 +463,7 @@ class Item(RepresentationMixin, PolymorphicModel):
     def get_type(self):
         if isinstance(self, InventoryItem):
             return "InventoryItem"
-        if isinstance(self, apps.get_model('digitalitems', 'DigitalItem')) or \
-                isinstance(self, apps.get_model('packs', 'PackItem')):
+        if isinstance(self, apps.get_model('digitalitems', 'DigitalItem')):
             return "DigitalItem"
         if isinstance(self, MadeToOrder):
             return "MadeToOrder"
@@ -457,13 +475,6 @@ class Item(RepresentationMixin, PolymorphicModel):
             return self.price
 
         min_price = self.price
-        if user is not None and user.is_authenticated:
-            for campaign in self.partner.campaigns.all():
-                for discount in campaign.discounts.all():
-                    candidate = self.default_price * discount.get_discount_multiplier(user)
-                    if candidate < min_price:
-                        min_price = candidate
-
         return min_price
 
     def button_status(self, cart=None):
@@ -487,59 +498,35 @@ class InventoryItem(Item):
     max_per_cart = models.IntegerField(null=True, blank=True, default=None)
     preallocated = models.BooleanField(default=False)
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
-        if self.partner.uses_square and not self.use_linked_inventory:
-            self.use_linked_inventory = True
-            self.save()
-        if not self.partner.uses_square and self.use_linked_inventory:
-            self.use_linked_inventory = False
-            self.save()
-
-    def adjust_inventory(self, quantity, reason=None):
-        if not self.use_linked_inventory:
-            backorder_count = 0
-            with transaction.atomic():
-                self.current_inventory += quantity
-                if self.current_inventory <= 0:
-                    backorder_count = -self.current_inventory
-                    self.current_inventory = 0
-                self.save()
-            self.log.create(quantity=quantity, reason=reason)
-            if backorder_count > 0:
-                backorder, _ = BackorderRecord.objects.get_or_create(item=self)
-                backorder.quantity = backorder_count
-                backorder.save()
-        else:
-            self.squareinventoryitem.set_square_inventory(quantity)
+    def adjust_inventory(self, quantity, reason=None, line=None):
+        """
+        Adjusts inventory
+        :param quantity:
+        :param reason:
+        :param line: relevant cart line
+        :return: True if inventory adjusted
+        """
+        backorder_count = 0
+        with transaction.atomic():
+            ii = InventoryItem.objects.select_for_update().get(id=self.id)
+            if line:
+                if ii.log.filter(line=line).exists():
+                    return False  # If we already have a log of updating the inventory, quit
+            ii.current_inventory += quantity
+            if ii.current_inventory <= 0:
+                backorder_count = -ii.current_inventory
+                ii.current_inventory = 0
+            ii.save()
+            ii.log.create(quantity=quantity, reason=reason, line=line)
+        if backorder_count > 0:
+            backorder, _ = BackorderRecord.objects.get_or_create(item=self)
+            backorder.quantity = backorder_count
+            backorder.save()
+        self.refresh_from_db()
+        return True
 
     def get_inventory(self):
-        if not self.use_linked_inventory:
-            return self.current_inventory
-        else:
-            return self.get_linked_inventory()
-
-    def get_linked_inventory(self):
-        if self.partner.uses_square:
-            try:
-                self.squareinventoryitem.update_local_stock()
-                return self.current_inventory
-            except Exception:
-                self.try_link_inventory()
-
-    def try_link_inventory(self):
-        if self.partner.uses_square:
-            try:
-                self.partner.squarelink.get_item_from_barcode(self.product.barcode)
-            except Exception:
-                pass
-
-    def linked_inventory_unlinked(self):
-        if self.partner.uses_square:
-            try:
-                return self.squareinventoryitem
-            except Exception:
-                return False
+        return self.current_inventory
 
     def button_status(self, cart=None):
         """Returns a tuple of text and enable/disabled
@@ -566,6 +553,7 @@ class InventoryLog(models.Model):
     timestamp = models.DateTimeField(blank=True)
     reason = models.CharField(max_length=200, blank=True, null=True)
     quantity = models.IntegerField()
+    line = models.ForeignKey("checkout.CheckoutLine", on_delete=models.CASCADE, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if not self.timestamp:
@@ -583,6 +571,8 @@ class MadeToOrder(Item):
     current_inventory = models.IntegerField(default=0)
 
     approx_lead = models.DurationField(blank=True, null=True)
+
+    external_url = models.URLField(blank=True, null=True)
 
     def __str__(self):
         return str(self.id) + str(self.product)
@@ -670,17 +660,8 @@ class ProductImage(models.Model):
             image.save()
             success = True
         except FileNotPresent:
-            print("An error occured")
             image.delete()
             success = False
-        try:
-            product = Product.objects.get(main_image=self)
-            image.products.add(product)
-            image.save()
-        except Exception as e:
-            print(e)
-        for product in self.product_set.all():
-            image.products.add(product)
         return image, success
 
 

@@ -1,1 +1,1 @@
-web: gunicorn shopcgt.wsgi
+web: gunicorn opencgat.wsgi

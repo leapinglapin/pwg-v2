@@ -1,12 +1,12 @@
 rfc3339
 gunicorn
-Django
+Django == 4.2.2
 django-allauth
 django-b2
 django-debug-toolbar
 django-debug-toolbar-template-profiler
 django-polymorphic
-django-money == 2.1.1
+django-money == 3.1.0
 django-rest-framework
 django-react-templatetags
 django-cors-headers
@@ -23,7 +23,7 @@ split-settings
 psycopg2-binary
 
 squareup
-wagtail
+wagtail==5.0.1
 whitenoise
 
 django-treewidget
@@ -51,7 +51,7 @@ requests
 xlrd
 beautifulsoup4
 django-treebeard
-django-oscar==3.1
+django-oscar @ git+https://github.com/django-oscar/django-oscar@master
 pytz
 
 python-dateutil

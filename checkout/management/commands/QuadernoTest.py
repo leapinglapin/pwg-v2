@@ -1,28 +1,29 @@
-import os
-import sys
 import urllib.parse
 
-from django.conf import settings
-from django.core.management.base import BaseCommand, CommandError
-
-import traceback
 import requests
-
-from checkout.models import Cart
+from django.conf import settings
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
     def handle(self, *args, **options):
         params = {'to_country': "GB"}
         params = urllib.parse.urlencode(params)
-        suffix = "tax_rates/calculate?{}".format(params)
-        print("{}{}".format(settings.QUADERNO_URL, suffix))
-        response = requests.get(
-            "{}{}".format(settings.QUADERNO_URL, suffix),
-            auth=(settings.QUADERNO_PRIVATE, "x"),
-            headers={
-                'User-Agent': "CG&T",
-            }
-        )
-        print(response)
-        print(response.json())
+        tests = [params]
+        tests.append("to_country=US&to_city=Verona&to_postal_code=53593")
+        url = settings.QUADERNO_URL
+        private_key = settings.QUADERNO_PRIVATE
+        for params in tests:
+            suffix = "tax_rates/calculate?{}".format(params)
+            print("{}{}".format(url, suffix))
+            response = requests.get(
+                "{}{}".format(url, suffix),
+                auth=(private_key, "x"),
+                headers={
+                    'User-Agent': "CG&T",
+                }
+            )
+            print(response)
+            print(response.json())
+            print(response.json()['rate'])
+            print("\n")

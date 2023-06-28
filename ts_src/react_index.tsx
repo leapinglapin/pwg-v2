@@ -9,6 +9,7 @@ import CartFull from "./cart/components/CartFull";
 import POS from "./cart/components/POS";
 import AddToCartButton from "./cart/components/AddToCartButton";
 import ProductListPageSort from "./cart/components/ProductListPageSort";
+import CheckoutUI from "./checkout/CheckoutUI";
 import {loadDownloads} from "./digital_files/download";
 import {configUploadButtons} from "./digital_files/upload";
 import {configureImageUploadButtons} from "./images/ImageUploader";
@@ -35,6 +36,7 @@ const componentsUsingRedux = {
     CartFull,
     POS,
     AddToCartButton,
+    CheckoutUI,
 };
 
 Object.assign(window, {

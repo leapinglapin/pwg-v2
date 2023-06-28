@@ -9,7 +9,6 @@
     {% include "checkout/snippets/checkout_process_bar.html" %}
     {% include "checkout/snippets/small_cart_summary.html" %}
     <div>
-
         {% if cart.is_account_required == False %}
             <form action="{% url 'checkout_login' %}" method="post" enctype="multipart/form-data">
                 {% csrf_token %}
@@ -25,7 +24,12 @@
                 <button type="submit" class="btn btn-primary">Checkout with Email</button>
             </form>
         {% endif %}
-        <a class="btn btn-primary" href="{% url 'account_login' %}">Login</a>
-        <a class="btn btn-secondary" href="{% url 'account_signup' %}">Sign Up</a>
+
+        <button class="btn btn-primary" onclick="window.location.href = '/accounts/login/?next=/checkout/' ">
+            Login
+        </button>
+        <button class="btn btn-secondary" onclick="window.location.href = '/accounts/signup/?next=/checkout/' ">
+            Sign Up
+        </button>
     </div>
 {% endblock %}

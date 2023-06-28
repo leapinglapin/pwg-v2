@@ -1,0 +1,13 @@
+{% extends 'container.html' %}
+{% load templatehelpers %}
+{% load static %}
+
+{% block title %}Sales Overview{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    {% include 'snippets/sales_table.html' with carts=carts %}
+{% endblock %}

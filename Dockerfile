@@ -6,7 +6,6 @@ ADD requirements.txt /app/requirements.txt
 RUN set -ex \
     && python -m venv /env \
     && /env/bin/pip install --upgrade pip \
-    && /env/bin/pip install /app/patreon-python \
     && /env/bin/pip install --no-cache-dir -r /app/requirements.txt
 
 

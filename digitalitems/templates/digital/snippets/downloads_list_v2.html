@@ -14,8 +14,8 @@
                                         <a href="{% url 'product_detail' product_slug=di.product.slug %}">
                                     {% endif %}
                                     <img class='w-full h-full object-cover rounded-t-md xl:rounded-t-none'
-                                         src="{{ di.product.main_image.image }}"
-                                         alt="{{ di.product.main_image.alt_text }}">
+                                         src="{{ di.product.primary_image.image }}"
+                                         alt="{{ di.product.primary_image.alt_text }}">
                                     {% with di.download_overlay_banner as banner %}
                                         {% if banner %}
                                             <div class="absolute w-full object-contain top-5 bg-red-600 text-center text-white ">{{ banner }}</div>

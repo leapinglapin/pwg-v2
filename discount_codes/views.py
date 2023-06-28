@@ -1,12 +1,13 @@
 from django.http import HttpResponseRedirect, HttpResponse
 from django.urls import reverse
+from django.views.decorators.csrf import csrf_exempt
 
 from discount_codes.models import DiscountCode, CodeUsage
 
 
 # Create your views here.
 
-
+@csrf_exempt
 def apply_code(request, code):
     potential_codes = DiscountCode.objects.filter(code=code.lower())
     print(potential_codes)
@@ -29,7 +30,8 @@ def apply_code(request, code):
         if next_page is None:
             next_page = reverse('shop')
         return HttpResponseRedirect(next_page)
+    else:
+        cart.discount_code_message = "The code {} does not exist".format(code)
     cart.discount_code = None
-    cart.discount_code_message = None
     cart.save()  # Clear code if we can't find the discount.
     return HttpResponse(status=400)

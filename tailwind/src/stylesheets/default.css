@@ -42,26 +42,25 @@
 @tailwind utilities;
 
 @layer utilities {
-    @variants responsive {
-        .first-child-line-clamp-3 > p {
-            @apply line-clamp-3;
-        }
+    .first-child-line-clamp-3 > p {
+        @apply line-clamp-3;
+    }
 
-        .first-child-line-clamp-6 > p {
-            @apply line-clamp-6;
-        }
+    .first-child-line-clamp-6 > p {
+        @apply line-clamp-6;
+    }
 
-        .all-other-children-hidden > :not(:first-child) {
-            display: none;
-        }
+    .all-other-children-hidden > :not(:first-child) {
+        display: none;
+    }
 
-        .grid-rows-2-first-min {
-            grid-template-rows: min-content auto;
-        }
+    .grid-rows-2-first-min {
+        grid-template-rows: min-content auto;
+    }
 
-        .grid-cols-2-auto {
-            grid-template-columns: repeat(2, auto);
-        }
+    .grid-cols-2-auto {
+        grid-template-columns: repeat(2, auto);
+
     }
 }
 
@@ -76,6 +75,7 @@ input[type="checkbox"] {
 #filter_form .treewidget {
     @apply h-48 overflow-auto;
 }
+
 #filter_form .select-dropdown {
     @apply block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md;
 }
@@ -94,12 +94,14 @@ input[type="checkbox"] {
     @apply text-white !important;
     border-radius: 12px;
 }
+
 .btn-success,
 .btn:active,
 .btn:focus {
     @apply border-white outline-white !important;
     box-shadow: none;
 }
+
 .btn-primary {
     @apply bg-primary-800 border-primary-800 !important;
 }
@@ -149,11 +151,12 @@ a:not(.unstyled):active {
 .popover {
     max-width: fit-content;
 }
-.popover-header{
+
+.popover-header {
     @apply justify-around;
 }
 
-.checkout-table > tbody > tr > td{
+.checkout-table > tbody > tr > td {
     vertical-align: middle;
 }
 

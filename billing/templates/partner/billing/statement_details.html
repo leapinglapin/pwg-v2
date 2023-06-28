@@ -1,0 +1,98 @@
+{% extends 'container.html' %}
+{% load templatehelpers %}
+{% load static %}
+
+{% block title %}Billing History{% endblock %}
+{% block extrastyle %}
+
+    <!-- Custom styles for this template -->
+
+{% endblock %}
+{% block content %}
+    <a href="{% url 'billing_statements' partner_slug=partner.slug %}">Back to all statements</a>
+    {% if statement %}
+        <h1>{{ statement }}</h1>
+        <h2>Balance at end of previous statement: {{ statement.get_balance_before_statement }}</h2>
+        <h2>Statement total: {{ statement.get_statement_total }} </h2>
+        <h2>Balance: {{ statement.get_balance_at_end_of_statement }} <i> at end of statement </i></h2>
+        <p>
+            {% if statement.finalized %}
+                This statement is finalized.
+            {% else %}
+                This statement is not final.
+            {% endif %}
+        </p>
+        Events by type:
+        {% for event_type,total in summary.items %}
+            <ul>
+                {% if total %}
+                    <li> {{ event_type }}: {{ total }} </li>
+                {% endif %}
+            </ul>
+        {% endfor %}
+        Summary of integration charges:
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Pack</th>
+                <th scope="col">Total Events</th>
+                <th scope="col">
+                    Users
+                    <button class="btn btn-primary" type="button" data-toggle="collapse"
+                            data-target="#collapseUserList"
+                            aria-expanded="false" aria-controls="collapseUserList">
+                        Expand
+                    </button>
+                </th>
+
+            </tr>
+            </thead>
+            {% for pack,events in pack_summary.items %}
+                <tr>
+                    <td>
+                        <a href="{% url 'view_pack_manage' campaign_id=pack.campaign.id partner_slug=partner.slug pack_id=pack.id %}">
+                            {{ pack.name }}
+                        </a>
+                    </td>
+                    <td> {{ events.count }} </td>
+
+                    <td>
+                        <div class="collapsed collapse show" id="collapseUserList">
+                            {% for event in events|slice:3 %}
+                                {% if event.user %}
+                                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=event.user.id %}">
+                                        {{ event.user.username }},
+                                    </a>
+                                {% else %}
+                                    {{ event.email_at_time_of_event }}
+                                {% endif %}
+                            {% endfor %}
+                            {% if events.count > 3 %} ... {% endif %}
+                        </div>
+
+                        <div class="collapse" id="collapseUserList">
+                            {% for event in events %}
+                                {% if event.user %}
+                                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=event.user.id %}">
+                                        {{ event.user.username }},
+                                    </a>
+                                {% else %}
+                                    {{ event.email_at_time_of_event }},
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </td>
+
+                </tr>
+            {% endfor %}
+        </table>
+    {% else %}
+        <h2>Balance: {{ balance }} </h2>
+    {% endif %}
+    Events:
+    {% include 'snippets/billing_event_table.html' with events=non_ic_events %}
+    Integration Charges:
+    {% include 'snippets/billing_event_table.html' with events=ic_events %}
+
+
+{% endblock %}

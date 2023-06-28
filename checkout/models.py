@@ -21,13 +21,10 @@ from django_react_templatetags.mixins import RepresentationMixin
 from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 from phonenumber_field.modelfields import PhoneNumberField
-from stripe.error import CardError
-from stripe.oauth_error import InvalidRequestError
 
 from checkout.managers import OpenCartManager, SavedCartManager, SubmittedCartManager
 from digitalitems.models import DigitalItem
 from intake.models import POLine
-from packs.models import PackItem
 from partner.models import Partner, PartnerTransaction
 from realaddress.abstract_models import AbstractAddress
 from shop.models import Item, InventoryItem
@@ -64,21 +61,23 @@ class Cart(RepresentationMixin, models.Model):
     discount_code = models.ForeignKey('discount_codes.DiscountCode', on_delete=models.SET_NULL, null=True, blank=True)
 
     # cart statuses
-    # - Frozen is for when a cart is in the process of being submitted
-    #   and we need to prevent any changes to it.
-    OPEN, MERGED, SAVED, FROZEN, SUBMITTED, PAID, COMPLETED, CANCELLED = (
-        "Open", "Merged", "Saved", "Frozen", "Submitted", "Paid", "Completed", "Cancelled")
+    # - Frozen is for when a cart is in the checkout process and changes are not allowed.
+    # - Processing is the point of no return when the user has clicked submit. This is to prevent rollback.
+    OPEN, MERGED, SAVED, FROZEN, PROCESSING, SUBMITTED, PAID, COMPLETED, CANCELLED = (
+        "Open", "Merged", "Saved", "Frozen", "Processing", "Submitted", "Paid", "Completed", "Cancelled")
     STATUS_CHOICES = (
         (OPEN, "Open - currently active"),
         (MERGED, "Merged - superseded by another cart"),
         (SAVED, "Saved - for items to be purchased later"),
         (FROZEN, "Frozen - the cart cannot be modified and is in checkout."),
+        (PROCESSING, "Processing - the checkout process has begun and the cart is in limbo"),
         (SUBMITTED, "Submitted - has completed checkout process, but not paid"),
         (PAID, "Paid - user has paid"),
         (COMPLETED, "Complete - order has been delivered/picked up/etc"),
         (CANCELLED, "Cancelled - Order was cancelled")
     )
     SUBMITTED_STATUS_CHOICES = (
+        (PROCESSING, "Processing - the checkout process has begun and the cart is in limbo"),
         (SUBMITTED, "Submitted - has completed being checked out"),
         (PAID, "Paid - user has paid"),
         (COMPLETED, "Complete - order has been delivered/picked up/etc"),
@@ -90,6 +89,7 @@ class Cart(RepresentationMixin, models.Model):
 
     date_created = models.DateTimeField("Date created", auto_now_add=True)
     date_merged = models.DateTimeField("Date merged", null=True, blank=True)
+    date_processing = models.DateTimeField("Date processing started", null=True, blank=True)
     date_submitted = models.DateTimeField("Date submitted", null=True,
                                           blank=True)
     date_paid = models.DateTimeField("Date paid", null=True, blank=True)
@@ -171,12 +171,13 @@ class Cart(RepresentationMixin, models.Model):
     private_comments = models.TextField(blank=True, null=True)
 
     tax_error = models.TextField(blank=True, null=True)
+    address_error = models.JSONField(blank=True, null=True)
 
     discount_code_message = models.TextField(max_length=True, null=True)
 
     def __str__(self):
-        return "{} cart (owner: {}, items: {}, total:{})".format(
-            self.status, self.owner, self.num_items, self.final_total)
+        return "{} cart (id: {}, owner: {}, items: {}, total:{})".format(
+            self.status, self.id, self.owner, self.num_items, self.final_total)
 
     # ============
     # Manipulation
@@ -203,7 +204,10 @@ class Cart(RepresentationMixin, models.Model):
                 if quantity > line.item.max_per_cart:
                     quantity = line.item.max_per_cart
             line.quantity = quantity
-            line.save()
+            if line.quantity == 0:
+                line.delete()
+            else:
+                line.save()
             return True
         except CheckoutLine.DoesNotExist:
             return None
@@ -228,6 +232,7 @@ class Cart(RepresentationMixin, models.Model):
 
         if not self.id:
             self.save()
+            print("Saved cart to get an ID")
         new_quantity = quantity
 
         line, created = self.lines.get_or_create(item=item, submitted_in_cart__isnull=True)
@@ -246,6 +251,7 @@ class Cart(RepresentationMixin, models.Model):
         if self.is_submitted:
             line.submit()
             self.update_final_totals()
+        print(line, created)
         return line, created
 
     add = add_item
@@ -285,14 +291,15 @@ class Cart(RepresentationMixin, models.Model):
             else:
                 existing_line.quantity = max(existing_line.quantity,
                                              line.quantity)
+            self.update_quantity(line=existing_line, quantity=existing_line.quantity)  # Force max item check
             existing_line.save()
             line.delete()
 
     def merge(self, cart2, add_quantities=True):
         """
         Merges another cart with this one.
-        :cart2: The cart to merge into this one.
-        :add_quantities: Whether to add line quantities when they are merged.
+        cart2: The cart to merge into this one.
+        add_quantities: Whether to add line quantities when they are merged.
         """
         print("Attempting to merge Carts")
         for line_to_merge in cart2.lines.all():
@@ -311,11 +318,17 @@ class Cart(RepresentationMixin, models.Model):
         """
         Freezes the cart so it cannot be modified.
         """
+        if self.discount_code:
+            self.discount_code.validate_code_for_cart(self)
+        if self.lines.count() == 0:
+            return
         self.status = self.FROZEN
         for line in self.lines.all():
             if not line.item.cart_owner_allowed_to_purchase(self):
                 line.delete()  # Remove all items the user isn't allowed to purchase
         # TODO: consider displaying a message to the user that the item(s) were removed
+        if self.lines.count() == 0:
+            self.thaw()
         self.save()
 
     def thaw(self):
@@ -323,6 +336,11 @@ class Cart(RepresentationMixin, models.Model):
         Unfreezes a cart so it can be modified again.
         Also resets the checkout process for this cart.
         """
+        # First check to see if this cart has any completed payments:
+        if self.payments.filter(collected=True):
+            self.mark_processing()  # Mark the cart as processing, since this cart should not be open.
+            raise Exception("Cannot thaw cart that is in progress")  # Do not re-open carts that have been paid for.
+
         self.delivery_method = None
         self.delivery_name = None
         self.delivery_apartment = None
@@ -345,10 +363,24 @@ class Cart(RepresentationMixin, models.Model):
         self.status = self.OPEN
         self.save()
 
+    def mark_processing(self):
+        """
+        Mark the cart as processing
+        """
+        with transaction.atomic():  # First, set the cart as processing so it cannot roll back to frozen
+            cart = Cart.objects.select_for_update().get(id=self.id)
+            if cart.is_submitted or cart.status == self.PROCESSING:
+                return  # don't resubmit a cart that is already processing.
+            cart.status = self.PROCESSING
+            cart.date_processing = now()
+            cart.save()
+
     def submit(self):
         """
         Mark this cart as submitted
         """
+
+        self.mark_processing()
         with transaction.atomic():
             cart = Cart.objects.select_for_update().get(id=self.id)
             if cart.is_submitted:
@@ -357,7 +389,6 @@ class Cart(RepresentationMixin, models.Model):
                 line.submit()
             cart.status = cart.SUBMITTED
             cart.date_submitted = now()
-
             if cart.payment_method != cart.PAY_IN_STORE:
                 cart.payment_partner = None
             if cart.delivery_method != cart.PICKUP_ALL:
@@ -374,7 +405,6 @@ class Cart(RepresentationMixin, models.Model):
         self.refresh_from_db()
         if self.is_submitted:
             self.send_submitted_email()
-
             partners, count = self.get_order_partners()
             for partner in partners:
                 self.send_partner_submitted_email(partner)
@@ -394,6 +424,11 @@ class Cart(RepresentationMixin, models.Model):
             self.send_cancelled_email()
 
     def pay_amount(self, amount, cash=False, timestamp=None):
+        success = False
+        if self.is_paid or self.status == self.CANCELLED:
+            return True  # Don't pay for an already paid cart
+        if not self.is_submitted:
+            self.submit()  # if cart hasn't been submitted then submit. Has own atomic lock.
         with transaction.atomic():
             cart = Cart.objects.select_for_update().get(id=self.id)
             if cart.is_paid or cart.status == cart.CANCELLED:
@@ -414,25 +449,20 @@ class Cart(RepresentationMixin, models.Model):
                 else:
                     cart.cash_paid += amount
             cart.save()
+            success = True
             print("{} of {} paid on cart {}".format(cart.total_paid, cart.final_total, cart))
         self.refresh_from_db()
         if self.total_paid and self.total_paid + Money(.01, "USD") >= self.final_total:
             self.pay(timestamp=timestamp)
+        return success
 
-    def remaining_or_change(self):
-        if self.total_paid is None or self.final_total is None:
-            return "Remaining"
-        if self.total_paid >= self.final_total:
-            return "Change"
-        else:
-            return "Remaining"
-
-    def remaining_or_change_amount(self):
-        if self.total_paid is None or self.final_total is None:
-            return self.final_total
-        return abs(self.total_paid - self.final_total)
+    def is_free(self):
+        total = self.get_total_subtotal()
+        return total.amount == 0
 
     def pay(self, method=None, timestamp=None, transaction_type=PartnerTransaction.PURCHASE):
+        if not self.is_submitted:
+            self.submit()  # if cart isn't submitted yet submit (has its own atomic lock)
         with transaction.atomic():
             cart = Cart.objects.select_for_update().get(id=self.id)
             if cart.is_paid or cart.status == cart.CANCELLED:
@@ -453,50 +483,12 @@ class Cart(RepresentationMixin, models.Model):
                 cart.status = cart.COMPLETED
             cart.save()
         self.refresh_from_db()
-        with transaction.atomic():
-            if self.is_paid:
-                self.send_payment_email()
-                try:
-                    self.pay_partners(transaction_type=transaction_type)
-                except Exception as e:
-                    print(e)
-        self.refresh_from_db()
-
-    def charge_saved_card(self, card, transaction_type=PartnerTransaction.SUBSCRIPTION):
-        if self.is_paid or self.is_cancelled:
-            return False
-        if self.owner is None:
-            return False  # Cart must be owned
-        if not self.is_submitted:
-            self.submit()
-        try:
-            payment_intent = stripe.PaymentIntent.create(
-                amount=int(self.final_total.amount * 100),
-                currency='usd',
-                customer=StripeCustomerId.objects.get_customer_id(user=self.owner),
-                payment_method=card.id,
-                off_session=True,
-                confirm=True,
-            )
-            self.stripepaymentintent_set.create(id=payment_intent.stripe_id,
-                                                amount_to_pay=self.final_total)
-            print("Successfully charged chard!")
-            self.pay(transaction_type=transaction_type, method=self.PAY_STRIPE)
-            return True
-
-        except CardError as e:
-            err = e.error
-            # Error code will be authentication_required if authentication is needed
-            print("Code is: %s" % err.code)
-            payment_intent_id = err.payment_intent['id']
-            self.stripepaymentintent_set.create(id=payment_intent_id,
-                                                amount_to_pay=self.final_total)
-            return False
-
-        except InvalidRequestError as e:
-            err = e.error
-            print("Invalid stripe request: {}".format(err))
-            return False
+        if self.is_paid:
+            self.send_payment_email()
+            try:
+                self.pay_partners(transaction_type=transaction_type)
+            except Exception as e:
+                print(e)
 
     def is_shipping_required(self):
         """
@@ -504,7 +496,7 @@ class Cart(RepresentationMixin, models.Model):
         shipping.
         """
         if len(Item.objects.filter(id__in=self.lines.values('item_id')).not_instance_of(
-                DigitalItem).not_instance_of(PackItem)) > 0:
+                DigitalItem)) > 0:
             # If there are non-digital items then it must need shipped (or in-store pickup)
             return True
 
@@ -527,11 +519,11 @@ class Cart(RepresentationMixin, models.Model):
     @property
     def not_only_digital(self):
         items = Item.objects.filter(id__in=self.lines.values('item_id'))
-        return items.not_instance_of(DigitalItem).not_instance_of(PackItem).exists()
+        return items.not_instance_of(DigitalItem).exists()
 
     def is_account_required(self):
         items = Item.objects.filter(id__in=self.lines.values('item_id'))
-        if items.instance_of(DigitalItem).exists() or items.instance_of(PackItem).exists():
+        if items.instance_of(DigitalItem).exists():
             # If there are digital items or pack items
             # then the user must have an account
             return True
@@ -556,6 +548,13 @@ class Cart(RepresentationMixin, models.Model):
         if self.shipping_address:
             return False
         return True
+
+    def is_delivery_method_set(self):
+        """
+        :return: true if there is a billing address or a pickup or shipping address
+        """
+        return (self.billing_address and not self.is_shipping_required()) or \
+            (self.pickup_partner or self.shipping_address)
 
     def is_payment_method_set(self):
         """
@@ -585,6 +584,32 @@ class Cart(RepresentationMixin, models.Model):
     V_PAY_IN_STORE = 'checkout_pay_in_store'
     V_PAY_ONLINE = 'checkout_pay_online'
     V_DONE = 'checkout_done'
+
+    # keep in sync with ts_src/checkout/components/CheckoutStep.tsx
+    STEP_START = 0
+    STEP_LOGIN = 1
+    STEP_DELIVERY_METHOD = 2
+    STEP_PAYMENT_COLLECTION = 3
+
+    def completed_steps(self):
+        steps = []
+        if self.is_frozen:
+            steps.append(self.STEP_START)
+        if self.is_account_set():
+            steps.append(self.STEP_LOGIN)
+        if self.is_delivery_method_set():
+            steps.append(self.STEP_DELIVERY_METHOD)
+        return steps
+
+    def ready_steps(self):
+        steps = [self.STEP_START]
+        if self.is_frozen:
+            steps.append(self.STEP_LOGIN)
+            if self.is_account_set():
+                steps.append(self.STEP_DELIVERY_METHOD)
+                if self.is_delivery_method_set():
+                    steps.append(self.STEP_PAYMENT_COLLECTION)
+        return steps
 
     def next_checkout_view(self, view=V_START, user=None):
         """
@@ -662,7 +687,7 @@ class Cart(RepresentationMixin, models.Model):
         return test_datetime - self.date_created
 
     @property
-    def is_submitted(self):
+    def is_submitted(self):  # Purposefully excluding the "processing" status here
         return self.status in [self.SUBMITTED, self.PAID, self.COMPLETED, self.CANCELLED]
 
     @property
@@ -672,6 +697,10 @@ class Cart(RepresentationMixin, models.Model):
     @property
     def is_frozen(self):
         return self.status == self.FROZEN
+
+    @property
+    def is_processing(self):
+        return self.status == self.PROCESSING
 
     @property
     def can_be_edited(self):
@@ -686,10 +715,11 @@ class Cart(RepresentationMixin, models.Model):
 
     @property
     def can_ship(self):
-        for line in self.lines.all():
-            if line.item.product.in_store_pickup_only:
-                return False
-        return True
+        return not self.in_store_pickup_only
+
+    @property
+    def in_store_pickup_only(self):
+        return self.lines.filter(item__product__in_store_pickup_only=True).exists()
 
     # =============
     # Query methods
@@ -738,7 +768,7 @@ class Cart(RepresentationMixin, models.Model):
     def get_shipping(self):
         """
         This function gets the cost of shipping
-        :return: 4, or 15 dollars depending on country, 0 if not required.
+        :return: 4, 0 if not required.
         """
         if self.is_shipping_required():
             if self.delivery_method == self.SHIP_ALL:
@@ -769,11 +799,15 @@ class Cart(RepresentationMixin, models.Model):
     def get_tax_address(self):
         '''
         This function returns the address used for calculating tax on the order.
-        If paid in store we use the
-        If the order is being picked up, we use the partner's address.
-        If delivered, we use the partner's address.
-        Otherwise we use the delivery address,
-        or failing that we use the billing address.
+            If paid in store we use the partner's address.
+            If the order is being picked up, we use the partner's address.
+            If the order is being shipped we use the shipping address,
+             and then fall back to billing address,
+            then shipping address if that was null
+        Checkout v2 doesn't differentiate between shipping and billing addresses anymore,
+            and only uses the shipping address field.
+        Clear this up once checkout v1 is retired. This logic is duplicated somewhat in get_tax,
+            since we just use the in_store tax rate there.
         :return: an address, or None
         '''
         if self.payment_method == self.PAY_IN_STORE:
@@ -786,14 +820,17 @@ class Cart(RepresentationMixin, models.Model):
             elif self.delivery_method == self.SHIP_ALL:
                 if self.shipping_address is not None:
                     return self.shipping_address
-        return self.billing_address
+        if self.billing_address is not None:
+            return self.billing_address
+        else:
+            return self.shipping_address
 
     def get_tax(self, final=False):
         try:
             subtotal = self.get_total_subtotal()
             if self.payment_method == self.PAY_IN_STORE and self.payment_partner is not None:
                 rate = self.payment_partner.in_store_tax_rate
-            elif self.delivery_method == self.PICKUP_ALL:
+            elif self.delivery_method == self.PICKUP_ALL and self.pickup_partner is not None:
                 rate = self.pickup_partner.in_store_tax_rate
             else:
                 address = self.get_tax_address()
@@ -808,33 +845,13 @@ class Cart(RepresentationMixin, models.Model):
             return tax
 
         except Exception as e:
+            print(e)
+            print("\n")
             self.tax_error = True
             self.save()
             mail.mail_admins("Tax rate calculation for cart {} failed".format(self.id), fail_silently=True,
                              message=str(e))
             return Money(0, 'USD')
-
-    def create_tax_transaction(self):
-        """
-        This function previously logged the tax transaction on taxjar.
-         It now does nothing except ensure final tax is set.
-        We should consider removing it and ensuring this is handled elsewhere (it probably already is)
-        :return:
-        """
-        if not self.is_paid:
-            return False
-
-        #  Ensure these two fields are set
-        if self.final_tax is None \
-                or self.final_physical_tax is None \
-                or self.final_digital_tax is None:
-            self.final_tax = self.get_tax(final=True)
-            self.save()
-        if self.final_ship is None:
-            self.final_ship = Money(0, 'USD')
-            self.save()
-
-        return True
 
     def get_estimate_total(self):
         return self.get_total_subtotal() + self.get_tax(final=False) + self.get_shipping()
@@ -851,12 +868,19 @@ class Cart(RepresentationMixin, models.Model):
 
     def to_react_representation(self, context={}):
         from .serializers import CartSerializer
-        return CartSerializer(self).data
+        if self.id:
+            return CartSerializer(self).data
+        return json.dumps({})
 
     def create_purchases(self):
         if self.is_paid:
             for line in self.lines.all():
                 line.purchase()
+
+    def get_pickup_partners(self):
+        partner_id_list = Item.objects.filter(id__in=self.lines.values('item_id')).not_instance_of(
+            DigitalItem).values_list('partner_id', flat=True).distinct()
+        return Partner.objects.filter(id__in=partner_id_list)
 
     def get_order_partners(self):
         """
@@ -915,6 +939,19 @@ class Cart(RepresentationMixin, models.Model):
             if self.date_paid:
                 pt.timestamp = self.date_paid
                 pt.save()
+            from billing.models import BillingEvent
+            # Ensure billing event does not already exist
+            if not BillingEvent.objects.filter(cart=self, partner=partner).exists():
+                BillingEvent.objects.create(cart=self,
+                                            partner=partner,
+                                            type=BillingEvent.COLLECTED_FROM_CUSTOMER,
+                                            platform_fee=partner_fees,
+                                            subtotal=partner_subtotal,
+                                            final_total=partner_subtotal - partner_fees,
+                                            email_at_time_of_event=self.get_order_email(),
+                                            user=self.owner,
+                                            timestamp=self.date_paid
+                                            )
 
     def clear_partner_payments(self):
         for pt in self.partner_transactions.all():
@@ -966,15 +1003,14 @@ class Cart(RepresentationMixin, models.Model):
             msg.send(fail_silently=True)
         partners, _ = self.get_order_partners()
         for partner in partners:
-            for admin in partner.administrators.all():
-                context = {'order': self}
-                html_template = get_template('checkout/email/order_cancelled.html')
-                msg = EmailMessage(subject='CG&T Order Cancelled #{}'.format(self.id),
-                                   body=html_template.render(context),
-                                   from_email=None,
-                                   to=[admin.email])
-                msg.content_subtype = 'html'
-                msg.send(fail_silently=True)
+            context = {'order': self}
+            html_template = get_template('checkout/email/order_cancelled.html')
+            msg = EmailMessage(subject='CG&T Order Cancelled #{}'.format(self.id),
+                               body=html_template.render(context),
+                               from_email=None,
+                               bcc=list(partner.administrators.all().values_list("email", flat=True)))
+            msg.content_subtype = 'html'
+            msg.send(fail_silently=True)
 
     def send_submitted_email(self):
         if self.get_order_email():
@@ -1020,30 +1056,38 @@ class Cart(RepresentationMixin, models.Model):
             msg.content_subtype = 'html'
             msg.send(fail_silently=True)
 
-    def send_partner_paid_email(self, partner):
-        for admin in partner.administrators.all():
-            context = {'order': self,
-                       'partner': partner}
-            html_template = get_template('checkout/email/partner_paid.html')
-            msg = EmailMessage(subject='CG&T Order Paid #{}'.format(self.id),
+    def send_status_update(self):
+        if self.get_order_email():
+            context = {'order': self}
+            html_template = get_template('checkout/email/status_update.html')
+            msg = EmailMessage(subject='CG&T Order #{} Status Update'.format(self.id),
                                body=html_template.render(context),
                                from_email=None,
-                               to=[admin.email])
+                               to=[self.get_order_email()])
             msg.content_subtype = 'html'
             msg.send(fail_silently=True)
 
+    def send_partner_paid_email(self, partner):
+        context = {'order': self,
+                   'partner': partner}
+        html_template = get_template('checkout/email/partner_paid.html')
+        msg = EmailMessage(subject='CG&T Order Paid #{}'.format(self.id),
+                           body=html_template.render(context),
+                           from_email=None,
+                           bcc=list(partner.administrators.all().values_list("email", flat=True)))
+        msg.content_subtype = 'html'
+        msg.send(fail_silently=True)
+
     def send_partner_submitted_email(self, partner):
-        for admin in partner.administrators.all():
-            print(admin)
-            context = {'order': self,
-                       'partner': partner}
-            html_template = get_template('checkout/email/partner_submitted.html')
-            msg = EmailMessage(subject='CG&T Order Submitted #{}'.format(self.id),
-                               body=html_template.render(context),
-                               from_email=None,
-                               to=[admin.email])
-            msg.content_subtype = 'html'
-            msg.send(fail_silently=True)
+        context = {'order': self,
+                   'partner': partner}
+        html_template = get_template('checkout/email/partner_submitted.html')
+        msg = EmailMessage(subject='CG&T Order Submitted #{}'.format(self.id),
+                           body=html_template.render(context),
+                           from_email=None,
+                           bcc=list(partner.administrators.all().values_list("email", flat=True)))
+        msg.content_subtype = 'html'
+        msg.send(fail_silently=True)
 
     def cancellable(self):
         for line in self.lines:
@@ -1091,6 +1135,7 @@ class CheckoutLine(models.Model):
                                           related_name='lines_fulfilled')
 
     fulfilled = models.BooleanField(default=False)
+    fulfilled_timestamp = models.DateTimeField(null=True)
 
     ready = models.BooleanField(default=False)
     ready_timestamp = models.DateTimeField(null=True)
@@ -1134,6 +1179,10 @@ class CheckoutLine(models.Model):
                 backorder_or_preorder = "backorder"
 
             if self.cart.is_submitted:
+                if self.fulfilled:
+                    if self.fulfilled_in_cart != self.cart:
+                        return "Fulfilled with order {}".format(self.fulfilled_in_cart.id)
+                    return "Fulfilled"
                 if self.cancelled or self.cart.status == Cart.CANCELLED:
                     return "Cancelled"
                 if self.ready or self.cart.ready_for_pickup:
@@ -1233,18 +1282,28 @@ class CheckoutLine(models.Model):
 
     def cancel(self):
         self.cancelled = True
+        self.cancelled_timestamp = datetime.datetime.utcnow()
+
+    def mark_ready(self):
+        self.ready = True
+        self.ready_timestamp = datetime.datetime.utcnow()
 
     def purchase(self):
         self.item.purchase(cart=self.cart)
 
     def complete(self):
         self.fulfilled = True
+        self.fulfilled_timestamp = datetime.datetime.utcnow()
 
     def reduce_inventory(self):
         if isinstance(self.item, InventoryItem):
-            self.qty_at_submit = self.item.get_inventory()
-            self.back_or_pre_order = not self.completely_in_stock
-            self.item.adjust_inventory(quantity=-self.quantity, reason="Sold in cart {}".format(self.cart_id))
+            qty_at_submit = self.item.get_inventory()
+            back_or_preorder = not self.completely_in_stock
+            success = self.item.adjust_inventory(quantity=-self.quantity, reason="Sold in cart {}".format(self.cart_id),
+                                                 line=self)
+            if success:
+                self.qty_at_submit = qty_at_submit
+                self.back_or_pre_order = back_or_preorder
 
     def cancellable(self):
         if isinstance(self.item, DigitalItem):
@@ -1273,51 +1332,6 @@ class StripeCustomerId(models.Model):
     user = models.OneToOneField(AUTH_USER_MODEL, on_delete=models.CASCADE, related_name="stripe_id")
     id = models.CharField(max_length=50, primary_key=True)
     objects = StripeCustomerIdManager()
-
-    def charge_subscriptions_for_user(self):
-        month = datetime.date.today().replace(day=1)
-        from subscriptions.models import SubscriptionData
-        cards = stripe.PaymentMethod.list(
-            customer=self.id,
-            type="card",
-        )
-        for card in cards.data:
-            total_to_charge = 0.0
-            subscriptions_on_card = self.user.subscriptions.filter(payment_method=card.id,
-                                                                   start_date__lte=datetime.date.today())
-            new_subs = SubscriptionData.objects.none()
-
-            for sub in subscriptions_on_card:
-                if not SubscriptionData.objects.filter(timestamp__gte=month) \
-                        .filter(tier=sub.tier, user=sub.user).exclude(payment_status=SubscriptionData.UNPAID) \
-                        .exists():
-                    new_sub, created = SubscriptionData.objects.get_or_create(tier=sub.tier, user=sub.user,
-                                                                              payment_status=SubscriptionData.UNPAID)
-                    if created:
-                        print("Created new sub for {}".format(new_sub.tier))
-                    else:
-                        print("Grabbed existing sub for {}".format(new_sub.tier))
-                    new_subs |= SubscriptionData.objects.filter(id=new_sub.id)
-
-            if new_subs.count() > 0:
-                # Create a new cart for user
-                cart = Cart.objects.create(owner=new_subs.first().user, store_initiated_charge=True)
-                # Add item to cart
-                for sub in new_subs:
-                    cart.add_item(sub.get_item(month))
-                    sub.cart = cart
-
-                cart.billing_address = self.user.default_address.address
-
-                # Try to charge the card
-                success = cart.charge_saved_card(card)
-                if success:
-                    for sub in new_subs:
-                        sub.mark_paid()
-                else:
-                    for sub in new_subs:
-                        sub.payment_status = SubscriptionData.PAYMENT_ERROR
-                        sub.save()
 
 
 class StripePaymentIntent(models.Model):
@@ -1396,7 +1410,7 @@ class TaxRateManager(models.Manager):
             )
             json = response.json()
             print(json)
-            if json['rate']:
+            if json['rate']:  # Only save non-zero rates, in case we get nexus. Not the most efficient.
                 tax, _ = super().get_or_create(location=location)
                 tax.rate = json['rate'] / 100  # Make it decimal
                 tax.save()

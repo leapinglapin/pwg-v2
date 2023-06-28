@@ -1,7 +1,7 @@
 {% extends 'container.html' %}
 {% load static %}
 
-{% block title %}Checkout{% endblock %}
+{% block title %}Order {{ past_cart.id }}{% endblock %}
 {% block extrastyle %}
 
 {% endblock %}
@@ -63,6 +63,13 @@
         {% include 'checkout/snippets/static_cart_summary.html' with cart=past_cart %}
     </div>
     <div>
-
+        {% if past_cart.public_comments %}
+            <h4>
+                Comments:
+            </h4>
+            <p>
+                {{ past_cart.public_comments }}
+            </p>
+        {% endif %}
     </div>
 {% endblock %}

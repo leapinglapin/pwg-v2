@@ -1,24 +1,26 @@
 {
-    "name": "@shopcgt/tailwind",
+    "name": "@opencgat/tailwind",
     "version": "1.0.0",
     "private": true,
     "dependencies": {
-        "@tailwindcss/forms": "^0.2.1",
-        "@tailwindcss/line-clamp": "^0.2.1",
-        "@tailwindcss/typography": "^0.4.1",
+        "@tailwindcss/forms": "latest",
+        "@tailwindcss/line-clamp": "latest",
+        "@tailwindcss/typography": "latest",
         "autoprefixer": "^10.2.4",
+        "browserlist": "latest",
         "laravel-mix": "^6.0.30",
-        "postcss": "^8.2.6",
         "postcss-cli": "^8.3.1",
         "postcss-import": "^14.0.0",
-        "tailwindcss": "^2.2.15",
-        "webpack": "^5.72.0"
+        "webpack": "^5.86.0"
     },
     "scripts": {
         "build": "TAILWIND_MODE=build mix --production",
         "watch": "TAILWIND_MODE=watch mix watch"
     },
     "devDependencies": {
-        "nodemon": "^2.0.7"
+        "autoprefixer": "^10.4.8",
+        "nodemon": "^2.0.22",
+        "postcss": "^8.4.16",
+        "tailwindcss": "latest"
     }
 }

@@ -11,21 +11,9 @@ from django.shortcuts import get_object_or_404, redirect
 from django.template.response import TemplateResponse
 from django.urls import reverse
 
-from crowdfund.models import Backer
 from digitalitems.forms import *
-from packs.models import DigitalPack
 from partner.models import get_partner_or_401
 from shop.models import Product
-
-
-def refresh_downloads_for_user(user):
-    # Check crowdfunding
-    backer_records = Backer.records.get_backers_for_user(user)
-    packs = DigitalPack.objects.filter(
-        id__in=backer_records.values_list('rewards__digital_packs', flat=True).distinct())
-    print("Entitled to packs: {}".format(packs))
-    for pack in packs:
-        pack.populate_users_downloads(user)
 
 
 @verified_email_required
@@ -35,9 +23,6 @@ def account_downloads(request, refresh=0):
     initial_data = {'page_size': page_size}
     if request.user.is_authenticated:
         # First ensure that all purchases are imported
-        if refresh:
-            refresh_downloads_for_user(request.user)
-            return HttpResponseRedirect(reverse('account_downloads'))
         # Now check all purchases
         downloads = DigitalItem.objects.filter(downloads__in=request.user.downloads.all()).distinct()
         print(downloads)
@@ -204,6 +189,8 @@ def download(request, di_id, di_file_id):
         'seed1': di_file.azure_file.url,
         'seed2': di_file.b2_file.url,
         'userid': request.user.id,
+        'tz': di.tag_zip_files,
+        'to': di.tag_obj_files,
         'clean_name': di_file.clean_name,
     }
     return JsonResponse(data)
@@ -248,7 +235,7 @@ def upload_file(request, partner_slug, product_slug, di_id, parent_node_id):
                 clean_name = request.POST['full_path']
             except KeyError:
                 pass
-            with transaction.atomic():
+            with transaction.atomic():  # Atomic to ensure we upload to both data sources.
                 start_time = datetime.now()
                 print("Uploading to Azure")
                 new_di_file = DIFile.objects.create(partner=partner, azure_file=file, clean_name=clean_name)

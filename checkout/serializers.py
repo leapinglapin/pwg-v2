@@ -51,53 +51,31 @@ class CartLineSerializer(serializers.ModelSerializer):
             return line.item.description
 
 
+class ShippingAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingAddress
+        fields = ('id', 'first_name', 'last_name', 'line1', 'line2', "line3", "line4",
+                  "state", "country", "postcode", "phone_number")
+
+
+class BillingAddressSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ShippingAddress
+        fields = ('id', 'first_name', 'last_name', 'line1', 'line2', "line3", "line4",
+                  "state", "country", "postcode")
+
+
 class CartSummarySerializer(serializers.ModelSerializer):
     estimated_total = serializers.SerializerMethodField()
     open = serializers.SerializerMethodField()
     owner_info = serializers.SerializerMethodField()
+    username = serializers.SerializerMethodField()
+    email = serializers.SerializerMethodField()
 
     class Meta:
         model = Cart
-        fields = ('id', 'status', 'final_total', 'final_tax',
-                  'estimated_total', 'open', 'total_paid', 'cash_paid', 'owner_info')
-
-    @staticmethod
-    def get_owner_info(cart):
-        if cart.owner:
-            return "{}".format(cart.owner.email)
-        elif cart.email:
-            return cart.email
-        else:
-            return "Anonymous"
-
-    @staticmethod
-    def get_estimated_total(cart):
-        return float(cart.get_estimated_total().amount)
-
-    @staticmethod
-    def get_open(cart):
-        return not cart.is_submitted
-
-
-class CartSerializer(serializers.ModelSerializer):
-    lines = CartLineSerializer(many=True)
-    payment_partner = PartnerSerializer()
-
-    subtotal = serializers.SerializerMethodField()
-    estimated_tax = serializers.SerializerMethodField()
-    estimated_total = serializers.SerializerMethodField()
-    open = serializers.SerializerMethodField()
-    owner_info = serializers.SerializerMethodField()
-
-    show_status_col = serializers.SerializerMethodField()
-
-    discount_code = serializers.SerializerMethodField()
-
-    class Meta:
-        model = Cart
-        fields = ('id', 'status', 'lines', 'payment_partner', 'final_total', 'final_tax', 'subtotal',
-                  'estimated_tax', 'estimated_total', 'open', 'total_paid', 'cash_paid', 'owner_info',
-                  'open', 'show_status_col', 'discount_code', 'discount_code_message')
+        fields = ('id', 'status', 'final_total', 'final_tax', 'username',
+                  'estimated_total', 'open', 'total_paid', 'cash_paid', 'owner_info', 'owner', 'email')
 
     @staticmethod
     def get_owner_info(cart):
@@ -106,15 +84,20 @@ class CartSerializer(serializers.ModelSerializer):
         elif cart.email:
             return cart.email
         else:
-            return None
+            return "Anonymous"
 
     @staticmethod
-    def get_subtotal(cart):
-        return float(cart.get_total_subtotal().amount)
+    def get_username(cart):
+        if cart.owner:
+            return cart.owner.username
+        return None
 
     @staticmethod
-    def get_estimated_tax(cart):
-        return float(cart.get_tax().amount)
+    def get_email(cart):
+        if cart.owner:
+            return cart.owner.email
+        else:
+            return cart.email
 
     @staticmethod
     def get_estimated_total(cart):
@@ -122,16 +105,104 @@ class CartSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_open(cart):
-        return not cart.is_submitted
+        return cart.status == Cart.OPEN
+
+
+class CartSerializer(CartSummarySerializer):
+    lines = CartLineSerializer(many=True)
+    payment_partner = PartnerSerializer()
+    pickup_partner = PartnerSerializer()
+
+    subtotal = serializers.SerializerMethodField()
+    estimated_tax = serializers.SerializerMethodField()
+
+    show_status_col = serializers.SerializerMethodField()
+
+    shipping_address = ShippingAddressSerializer()
+    billing_address = BillingAddressSerializer()
+
+    available_pickup_partners = serializers.SerializerMethodField()
+
+    is_shipping_required = serializers.SerializerMethodField()
+    is_account_required = serializers.SerializerMethodField()
+    in_store_pickup_only = serializers.SerializerMethodField()
+
+    completed_steps = serializers.SerializerMethodField()
+    ready_steps = serializers.SerializerMethodField()
+
+    discount_code = serializers.SerializerMethodField()
+
+    site = serializers.SerializerMethodField()
+
+    is_free = serializers.SerializerMethodField()
+
+    address_error = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Cart
+        fields = ('id', 'status', 'lines', 'payment_partner', 'final_total', 'final_tax', 'subtotal',
+                  'estimated_tax', 'estimated_total', 'open', 'final_ship', 'total_paid', 'cash_paid', 'owner_info',
+                  'open', 'show_status_col', 'owner', 'email', 'username', 'shipping_address', 'billing_address',
+                  'available_pickup_partners', 'is_shipping_required', 'pickup_partner', 'delivery_method',
+                  'is_account_required', 'completed_steps', 'ready_steps', 'address_error',
+                  'discount_code', 'discount_code_message', 'site', 'is_free', 'in_store_pickup_only')
+
+    @staticmethod
+    def get_subtotal(cart):
+        return float(cart.get_total_subtotal().amount)
+
+    @staticmethod
+    def get_address_error(cart):
+        return json.dumps(cart.address_error)
+
+    @staticmethod
+    def get_estimated_tax(cart):
+        return float(cart.get_tax().amount)
 
     @staticmethod
     def get_show_status_col(cart):
         return cart.not_only_digital
 
     @staticmethod
+    def get_available_pickup_partners(cart):
+        partners = cart.get_pickup_partners()
+        partners_serialized = []
+        for partner in partners:
+            partners_serialized.append(PartnerSerializer(partner).data)
+        return partners_serialized
+
+    @staticmethod
+    def get_is_shipping_required(cart):
+        return cart.is_shipping_required()
+
+    @staticmethod
+    def get_is_account_required(cart):
+        return cart.is_account_required()
+
+    @staticmethod
+    def get_completed_steps(cart):
+        return cart.completed_steps()
+
+    @staticmethod
+    def get_ready_steps(cart):
+        return cart.ready_steps()
+
+    @staticmethod
     def get_discount_code(cart):
         if cart.discount_code:
             return cart.discount_code.code
+
+    @staticmethod
+    def get_site(cart):
+        return cart.site.domain
+
+    @staticmethod
+    def get_is_free(cart):
+        return cart.is_free()
+
+    @staticmethod
+    def get_in_store_pickup_only(cart):
+        return cart.in_store_pickup_only
 
 
 def get_pos_props(partner, cart_id=None):

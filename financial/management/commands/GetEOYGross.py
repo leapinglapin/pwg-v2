@@ -40,10 +40,7 @@ class Command(BaseCommand):
             for line in cart.lines.filter(partner_at_time_of_submit=partner):
                 valhalla_collected += line.get_subtotal()
                 if line.item and line.item.product and line.item.product.barcode:
-                    cost = get_purchased_as(0, f, po_lines,
-                                            line.item.product.barcode,
-                                            line.item.product.name)
-                    spent_on_sold += (line.quantity * cost)
+                    pass
 
         log(f, "Valhalla Collected {} (not including tax or shipping)".format(valhalla_collected))
         log(f, "Valhalla Spent {} on inventory that was sold".format(spent_on_sold))
@@ -53,10 +50,7 @@ class Command(BaseCommand):
 
         for item in InventoryItem.objects.filter(partner=partner):
             if item and item.product and item.product.barcode:
-                cost = get_purchased_as(0, f, po_lines,
-                                        item.product.barcode,
-                                        item.product.name)
-                remaining_inventory += (item.current_inventory * cost)
+                pass
 
         log(f, "Remaining Inventory is approximately {}".format(remaining_inventory))
 

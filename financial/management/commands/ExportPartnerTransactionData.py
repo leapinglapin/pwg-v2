@@ -23,8 +23,11 @@ class Command(BaseCommand):
             partner = partners.first()
             print(partner)
         else:
-            print("Please choose a distributor:")
-            print(partners)
+            print("Please choose a Partner:")
+            if partners.count > 1:
+                print(partners)
+            else:
+                print(Partner.objects.all())
             return
 
         filename = 'reports/{}/transaction_report_report_{}.csv'.format(partner.name, datetime.date.today().isoformat())

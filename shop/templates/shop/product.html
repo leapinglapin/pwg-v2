@@ -45,19 +45,31 @@
                                     </a>
                                 {% endif %}
                             </td>
-                            <td>
-                                {% if product.item_set.count == 0 %}
-                                    <a href="{% url 'delete_product' product_slug=product|slugify partner_slug=partner|slugify confirm=0 %}">
+                            {% if partner.retail_partner %}
+                                <td>
+                                    <a href="{% url 'edit_related_products' product_slug=product|slugify partner_slug=partner|slugify %}">
+                                        Edit Related Products
+                                    </a>
+                                </td>
+                            {% endif %}
+                            {% if product.item_set.count == 0 %}
+
+                                <td>
+                                    <a href="{% url 'delete_product' product_slug=product.slug partner_slug=partner.slug confirm=0 %}">
                                         Delete Product
                                     </a>
-                                {% endif %}
-                            </td>
+                                </td>
+                            {% endif %}
                             <td>
                                 <a href=" {% url  'product_detail' product_slug=product.slug %}">
                                     View public page
                                 </a>
                             </td>
-
+                            <td>
+                                <a href=" {% url  'copy_product' product_slug=product.slug partner_slug=partner.slug %}">
+                                    Copy
+                                </a>
+                            </td>
                         </tr>
                     </table>
                 {% else %}
@@ -82,14 +94,14 @@
                 {% endif %}
             </div>
             <div class="row">
-                {% if product.main_image %}
-                    <a href="{{ product.main_image.image.url }}" target="_blank" id="displayed_image_link">
-                        <img class='card-image' src="{{ product.main_image.image.url }}"
-                             alt="{{ product.main_image.alt_text }}" id="displayed_image">
+                {% if product.primary_image %}
+                    <a href="{{ product.primary_image.image_url }}" target="_blank" id="displayed_image_link">
+                        <img class='card-image' src="{{ product.primary_image.image_url }}"
+                             alt="{{ product.primary_image.alt_text }}" id="displayed_image">
                     </a>
                 {% endif %}
                 {% if partner %}
-                    <a href="{% url 'upload_main_image' product_slug=product|slugify partner_slug=partner|slugify %}">
+                    <a href="{% url 'upload_primary_image' product_slug=product|slugify partner_slug=partner|slugify %}">
                         Set Image
                     </a>
                 {% endif %}
@@ -102,32 +114,23 @@
                 }
             </script>
             <div class="row grid grid-cols-4" id="product_image_gallery">
-                {#  First image in the gallery #}
-                {% if product.main_image %}
-                    <div>
-                        <img class='img-thumbnail' src="{{ product.main_image.image.url }}"
-                             alt="{{ product.main_image.alt_text }}"
-                             style="max-height: 200px;, max-width: 100%"
-                             onclick="updateMainImage(this);"
-                        />
-                        {% if partner %}
-                            <a type="button" class="btn btn-danger"
-                               href="{% url 'remove_image' product_slug=product.slug partner_slug=partner.slug image_id=product.main_image.id %}">
-                                Remove Image
-                            </a>
-                        {% endif %}
-                    </div>
-                {% endif %}
+                {#  Primary image is now included in the attached_images list.#}
+                {#  We may consider adding it back as always the first image later #}
+
                 {#  Image Gallery #}
-                {% for image in product.image_gallery.all %}
+                {% for image in product.attached_images.all %}
                     <div>
-                        <img src="{{ image.image.url }}" alt="{{ image.alt_text }}" class="img-thumbnail"
+                        <img src="{{ image.image_url }}" alt="{{ image.alt_text }}" class="img-thumbnail"
                              style="max-height: 200px;"
                              onclick="updateMainImage(this)"/>
                         {% if partner %}
                             <a type="button" class="btn btn-danger"
                                href="{% url 'remove_image' product_slug=product.slug partner_slug=partner.slug image_id=image.id %}">
                                 Remove Image
+                            </a>
+                            <a type="button" class="btn btn-success"
+                               href="{% url 'set_image_as_primary' product_slug=product.slug partner_slug=partner.slug image_id=image.id %}">
+                                Set as primary
                             </a>
                         {% endif %}
                     </div>
@@ -193,6 +196,30 @@
                         <tr>
                             <td>
                                 Barcode: {{ product.barcode }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.contains_product %}
+                        <tr>
+                            <td>
+                                Contains {{ product.contains_number }}
+                                <a href=" {% url  'product_detail' product_slug=product.contains_product.slug %}">
+                                    {{ product.contains_product.name }}
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.publisher_sku %}
+                        <tr>
+                            <td>
+                                SKU: {{ product.publisher_sku }}
+                            </td>
+                        </tr>
+                    {% endif %}
+                    {% if product.publisher_short_sku %}
+                        <tr>
+                            <td>
+                                Short SKU: {{ product.publisher_short_sku }}
                             </td>
                         </tr>
                     {% endif %}
@@ -360,6 +387,14 @@
             {% endif %}
             </div>
 
+            {% if product.replaced_by %}
+                This product has been replaced by a newer version: <br>
+                <a href=" {% url  'product_detail' product_slug=product.replaced_by.slug %}">
+                    {{ product.replaced_by.name }}
+                </a>
+
+
+            {% endif %}
             <div class="row mb-3 p-0.5">
                 <p> {{ product.description|richtext }} </p>
             </div>
@@ -421,7 +456,7 @@
             {% endif %}
             {% if po_lines %}
                 <div class="row mb-3 p-0.5">
-                    <h2> Purchase Order Records ({{ po_lines.count }})</h2>
+                    <h2> Purchase Order Lines ({{ x_purchased }} Purchased)</h2>
                     <table class="table">
                         <tr>
                             <th scope="col">Date</th>

@@ -1,0 +1,15 @@
+{% extends 'container.html' %}
+{% load react %}
+{% load static %}
+
+{% block title %}Checkout{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    <p>If you experience any difficulties please contact us at
+        <a href="mailto:shop@comicsgamesandthings.com"> shop@comicsgamesandthings.com </a>.
+    </p>
+    <br>
+    {% react_render component="CheckoutUI" props=props %}
+{% endblock %}

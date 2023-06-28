@@ -1,20 +1,15 @@
+import djmoney as djmoney
 from address.models import Country, State
 from allauth.account.models import EmailAddress
 from django import forms
 from django.conf import settings
 from django.core.exceptions import ValidationError
-from django.utils import timezone
-import djmoney as djmoney
+from oscar.forms.mixins import PhoneNumberMixin
 from wagtail.users.forms import User
 
-from realaddress.models import UserAddress
 from partner.models import Partner
-from shop.models import Product, Item
-from django.forms import widgets
-
+from realaddress.models import UserAddress
 from .models import Cart, ShippingAddress, BillingAddress
-
-from oscar.forms.mixins import PhoneNumberMixin
 
 
 class EmailForm(forms.ModelForm):
@@ -146,6 +141,12 @@ class TrackingInfoForm(forms.ModelForm):
     class Meta:
         model = Cart
         fields = ['tracking_number', 'carrier', 'postage_paid']
+
+
+class PartnerCommentsForm(forms.ModelForm):
+    class Meta:
+        model = Cart
+        fields = ['public_comments', 'private_comments']
 
 
 class FiltersForm(forms.Form):

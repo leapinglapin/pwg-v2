@@ -28,3 +28,16 @@ class Image(models.Model):
             # Set alt text to the filename, without the extension, and replace underscores with spaces
             self.alt_text = ".".join(self.image_src.name.split('.')[:-1]).replace('_', ' ')
         return super(Image, self).save(*args, **kwargs)
+
+    class Meta:
+        ordering = ['id']  # Order by ID which is roughly equivalent to upload order.
+
+    @property
+    def image(self):
+        return self.image_src
+        # used to maintain compatibility with older templates.
+
+    @property
+    def image_url(self):
+        if self.image and hasattr(self.image_src, 'url'):
+            return self.image.url

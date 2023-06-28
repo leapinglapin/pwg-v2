@@ -1,7 +1,7 @@
 {% extends 'container.html' %}
 {% load static %}
 
-{% block title %}Checkout{% endblock %}
+{% block title %}Order {{ past_cart.id }}{% endblock %}
 {% block extrastyle %}
 
 {% endblock %}
@@ -83,11 +83,15 @@
                             Cancel
                         </a>
                     {% endif %}
+                    <a class="btn btn-success"
+                       href="{% url 'partner_order_status_update' partner_slug=partner.slug cart_id=past_cart.id %}">
+                        Send Status Update
+                    </a>
                 </td>
             </tr>
         </table>
         {% include 'checkout/snippets/cart_address_info.html' with cart=past_cart %}
-        {% include 'checkout/snippets/static_cart_summary.html' with cart=past_cart %}
+        {% include 'checkout/snippets/static_cart_summary.html' with cart=past_cart manage=partner.slug %}
     </div>
     <div>
         <a class="btn btn-secondary"
@@ -116,48 +120,99 @@
 
     </div>
     <div>
+        <form action="{% url 'partner_update_comments' partner_slug=partner.slug cart_id=past_cart.id %}" method="post"
+              enctype="multipart/form-data">
+            {% csrf_token %}
+            {% include 'snippets/form_body.html' with form=comments_form %}
+            <button type="submit" class="btn btn-primary">Save comments</button>
+        </form>
+    </div>
+    <div>
         <table class="table">
             <thead>
 
             <tr>
-                <th scope="col" colspan="5">Stripe Payment Intents</th>
+                <th scope="col" colspan="5">Charges</th>
             </tr>
             <tr>
+                <th scope="col">Platform</th>
                 <th scope="col">ID</th>
-                <th scope="col">Amount Charged (stripe)</th>
+                <th scope="col">Amount Requested</th>
                 <th scope="col">Amount Received</th>
-                <th scope="col">Stripe Status</th>
+                <th scope="col">Remote Status</th>
                 <th scope="col">Local Status</th>
 
             </tr>
             </thead>
-            {% for payment_intent in past_cart.stripepaymentintent_set.all %}
+            {% for payment in past_cart.payments.all %}
                 <tr>
-                    {% with payment_intent.get_json as pi_data %}
+                    {% with payment_summary=payment.get_summary %}
                         <td>
-                            {{ payment_intent.id }}
+                            {{ payment_summary.platform }}
                         </td>
                         <td>
-                            {{ payment_intent.amount_to_pay }} ({{ pi_data.amount }} cents)
+                            {{ payment.id }} ({{ payment_summary.remote_id }})
                         </td>
                         <td>
-                            {{ pi_data.amount_received }} cents
+                            {{ payment_summary.requested_amount }}
                         </td>
                         <td>
-                            {{ pi_data.status }}
+                            {{ payment_summary.amount_collected }}
                         </td>
                         <td>
-                            {% if payment_intent.captured %}
-                                Confirmed
-                            {% else %}
-                                Not Received
-                            {% endif %}
+                            {{ payment_summary.remote_status }}
+                        </td>
+                        <td>
+                            {{ payment_summary.status }}
                         </td>
                     {% endwith %}
 
                 </tr>
             {% endfor %}
-
         </table>
+        {% if past_cart.stripepaymentintent_set.all %}
+            <table class="table">
+                <thead>
+
+                <tr>
+                    <th scope="col" colspan="5">Stripe Payment Intents (Old System)</th>
+                </tr>
+                <tr>
+                    <th scope="col">ID</th>
+                    <th scope="col">Amount Charged (stripe)</th>
+                    <th scope="col">Amount Received</th>
+                    <th scope="col">Stripe Status</th>
+                    <th scope="col">Local Status</th>
+
+                </tr>
+                </thead>
+                {% for payment_intent in past_cart.stripepaymentintent_set.all %}
+                    <tr>
+                        {% with payment_intent.get_json as pi_data %}
+                            <td>
+                                {{ payment_intent.id }}
+                            </td>
+                            <td>
+                                {{ payment_intent.amount_to_pay }} ({{ pi_data.amount }} cents)
+                            </td>
+                            <td>
+                                {{ pi_data.amount_received }} cents
+                            </td>
+                            <td>
+                                {{ pi_data.status }}
+                            </td>
+                            <td>
+                                {% if payment_intent.captured %}
+                                    Confirmed
+                                {% else %}
+                                    Not Received
+                                {% endif %}
+                            </td>
+                        {% endwith %}
+
+                    </tr>
+                {% endfor %}
+            </table>
+        {% endif %}
     </div>
 {% endblock %}

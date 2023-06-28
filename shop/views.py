@@ -16,13 +16,13 @@ from polymorphic.managers import PolymorphicManager
 
 from checkout.models import Cart, CheckoutLine
 from digitalitems.models import DigitalItem
+from images.forms import UploadImage
 from images.models import Image
 from intake.models import DistItem, POLine
-from packs.models import PackItem
 from partner.models import get_partner, get_partner_or_401
-from .forms import AddProductForm, UploadImage, FiltersForm, AddMTOItemForm, AddInventoryItemForm, \
-    CreateCustomChargeForm
-from .models import Product, Item, InventoryItem, MadeToOrder, ProductImage, BackorderRecord
+from .forms import AddProductForm, FiltersForm, AddMTOItemForm, AddInventoryItemForm, \
+    CreateCustomChargeForm, RelatedProductsForm
+from .models import Product, Item, InventoryItem, MadeToOrder, BackorderRecord
 from .serializers import ItemSerializer
 
 
@@ -56,6 +56,7 @@ def product_list(request, partner_slug=None):
     out_of_stock_only = False
     sold_out_only = False
     featured_products_only = None
+    only_templates = False
     publisher = None
     game = None
     faction = None
@@ -67,6 +68,8 @@ def product_list(request, partner_slug=None):
             out_of_stock_only = True
         if form.cleaned_data.get('sold_out_only'):
             sold_out_only = True
+        if form.cleaned_data.get('templates'):
+            only_templates = True
         if form.cleaned_data.get('featured_products_only'):
             featured_products_only = True
         if form.cleaned_data.get('price_minimum'):
@@ -109,8 +112,7 @@ def product_list(request, partner_slug=None):
     for product_type in selected_product_types:
         if product_type == Item.DIGITAL:  # Digital
             displayed_items = displayed_items \
-                              | all_items.instance_of(apps.get_model('digitalitems.DigitalItem')) \
-                              | all_items.instance_of(apps.get_model('packs.PackItem'))
+                              | all_items.instance_of(apps.get_model('digitalitems.DigitalItem'))
         if product_type == Item.INVENTORY:  # Inventory
             inv_items = all_items.instance_of(InventoryItem)
             if in_stock_only:
@@ -148,7 +150,7 @@ def product_list(request, partner_slug=None):
     # this only works in the product list view.
     Item.filtered_items = ProductItemFilteredManager()
 
-    displayed_products = Product.objects.filter(item__in=displayed_items)
+    displayed_products = Product.objects.filter(item__in=displayed_items).prefetch_related('item_set')
 
     if partner:
         # This partner filter is for if the partner is viewing from the management url
@@ -168,6 +170,11 @@ def product_list(request, partner_slug=None):
         # Partners can view all products regardless of view release dates.
     else:
         displayed_products = displayed_products.filter_listed(manage)
+
+    if only_templates:
+        displayed_products = displayed_products.filter(page_is_template=True)
+    else:
+        displayed_products = displayed_products.filter(page_is_template=False)
 
     if search_query:
         displayed_products = displayed_products.filter(
@@ -250,7 +257,6 @@ def product_details(request, product_slug, partner_slug=None):
     inv_items = InventoryItem.objects.filter(product=product)
     download_items = DigitalItem.objects.filter(product=product)
     mto_items = MadeToOrder.objects.filter(product=product)
-    pack_items = PackItem.objects.filter(product=product)
     if partner:
         inv_items = inv_items.filter(partner=partner)
         download_items = download_items.filter(partner=partner)
@@ -263,17 +269,21 @@ def product_details(request, product_slug, partner_slug=None):
         'inv_items': inv_items,
         'download_item': download_item,
         'mto_items': mto_items,
-        'pack_items': pack_items
     }
     if manage:
         context["partner"] = partner
 
         sales = CheckoutLine.objects.filter(item__in=Item.objects.filter(product=product, partner=partner),
-                                                       cart__status__in=[Cart.SUBMITTED, Cart.PAID, Cart.COMPLETED,
-                                                                         Cart.CANCELLED])
+                                            cart__status__in=[Cart.SUBMITTED, Cart.PAID, Cart.COMPLETED,
+                                                              Cart.CANCELLED]).order_by("-cart__date_submitted")
+        purchases = POLine.objects.filter(barcode=product.barcode).exclude(barcode=None).order_by("-po__date")
         context["sales"] = sales
-        context["x_sold"] = sales.filter(cart__status__in=[Cart.SUBMITTED, Cart.PAID, Cart.COMPLETED]).aggregate(sum=Sum("quantity"))['sum']
-        context["po_lines"] = POLine.objects.filter(barcode=product.barcode).exclude(barcode=None).order_by("-po__date")
+        context["x_sold"] = \
+            sales.filter(cart__status__in=[Cart.SUBMITTED, Cart.PAID, Cart.COMPLETED]).aggregate(sum=Sum("quantity"))[
+                'sum']
+        context["po_lines"] = purchases
+        context["x_purchased"] = purchases.aggregate(sum=Sum("received_quantity"))['sum']
+
     else:
         if not product.visible:
             raise PermissionDenied
@@ -307,16 +317,11 @@ def product_details(request, product_slug, partner_slug=None):
             context['partner_slug'] = partner.slug
             context['product_slug'] = product_slug
             context['di_id'] = download_item.id
-    print(Image.objects.filter(products=product))
-    print(product.attached_images)
     return TemplateResponse(request, "shop/product.html", context=context)
 
 
 def get_item_details(request, item_id):
     item = get_object_or_404(Item, id=item_id)
-    if isinstance(item, InventoryItem) and item.use_linked_inventory:
-        sq_item = item.squareinventoryitem_set.first()
-        sq_item.update_local_stock()
     return JsonResponse(ItemSerializer(item, context={'cart': request.cart}).data)
 
 
@@ -336,11 +341,13 @@ def add_edit_product(request, partner_slug, product_slug=None):
         also_check = [product]
     partner = get_partner_or_401(request, partner_slug, also_check)
 
-    form = AddProductForm(instance=product)
+    form = AddProductForm(instance=product, partner=partner)
     if request.method == 'POST':
         # create a form instance and populate it with data from the request:
-        form = AddProductForm(request.POST, instance=product)
+        form = AddProductForm(request.POST, instance=product, partner=partner)
         # check whether it's valid:
+        print(form.is_valid())
+        print(form.errors)
         if form.is_valid():
             new_product = form.save(commit=False)
             new_product.partner = partner
@@ -368,6 +375,65 @@ def add_edit_product(request, partner_slug, product_slug=None):
     return TemplateResponse(request, "shop/edit_product.html", context=context)
 
 
+@login_required
+def edit_related_products(request, partner_slug, product_slug):
+    product = None
+    if product_slug:
+        product = get_object_or_404(Product, slug=product_slug)
+    also_check = []
+    if product and not product.all_retail:
+        also_check = [product]
+    partner = get_partner_or_401(request, partner_slug, also_check)
+
+    form = RelatedProductsForm(instance=product)
+    if request.method == 'POST':
+        # create a form instance and populate it with data from the request:
+        form = RelatedProductsForm(request.POST, instance=product)
+        # check whether it's valid:
+        print(form.is_valid())
+        print(form.errors)
+        if form.is_valid():
+            new_product = form.save(commit=False)
+            new_product.partner = partner
+            new_product.save()
+            return HttpResponseRedirect(
+                reverse("manage_product", kwargs={'partner_slug': partner.slug, 'product_slug': new_product.slug}))
+    context = {
+        'form': form,
+        'product': product,
+        'partner': partner,
+    }
+    return TemplateResponse(request, "shop/edit_product.html", context=context)
+
+
+@login_required
+def copy_product(request, partner_slug, product_slug):
+    partner = get_partner_or_401(request, partner_slug)
+    product = get_object_or_404(Product, slug=product_slug)
+    original_id = product.id
+    product_copy = product
+    product_copy.id = None
+    product_copy.name = "{} Copy".format(product.name)
+    product_copy.barcode = None
+    product_copy.page_is_draft = True
+    product_copy.page_is_template = False
+    product_copy.publisher_sku = None
+    product_copy.publisher_short_sku = None
+    product_copy.save()  # Saving gets us a new ID
+    product = Product.objects.get(id=original_id)  # Reload original product as product now references product_copy
+
+    product_copy.name = "{} ({})".format(product_copy.name, product_copy.id)
+    product_copy.games.add(*product.games.all())
+    product_copy.categories.add(*product.categories.all())
+    product_copy.editions.set(product.editions.all())
+    product_copy.formats.set(product.formats.all())
+    product_copy.factions.set(product.factions.all())
+    product_copy.attributes.set(product.attributes.all())
+    product_copy.save()
+    return HttpResponseRedirect(
+        reverse("edit_product", kwargs={'partner_slug': partner.slug, 'product_slug': product_copy.slug}))
+
+
 def delete_product(request, partner_slug, product_slug, confirm):
     partner = get_partner_or_401(request, partner_slug)
     product = get_object_or_404(Product, slug=product_slug)
@@ -391,7 +457,7 @@ def delete_product(request, partner_slug, product_slug, confirm):
         return TemplateResponse(request, "confirm_delete.html", context=context)
 
 
-def upload_main_image(request, partner_slug, product_slug):
+def upload_primary_image(request, partner_slug, product_slug):
     partner = get_partner_or_401(request, partner_slug)
     product = get_object_or_404(Product, slug=product_slug)
     print(request.method)
@@ -406,8 +472,8 @@ def upload_main_image(request, partner_slug, product_slug):
             image = form.save(commit=False)
             image.partner = partner
             image.save()
-            image.migrate()
-            product.main_image = image
+            product.primary_image = image
+            product.attached_images.add(image)
             product.save()
             # redirect to a new URL:
             return HttpResponseRedirect(
@@ -420,6 +486,16 @@ def upload_main_image(request, partner_slug, product_slug):
         'partner': partner
     }
     return TemplateResponse(request, "create_from_form.html", context=context)
+
+
+def set_image_as_primary(request, partner_slug, product_slug, image_id):
+    partner = get_partner_or_401(request, partner_slug)
+    product = get_object_or_404(Product, slug=product_slug)
+    image = get_object_or_404(Image, id=image_id)
+    product.primary_image = image
+    product.save()
+    return HttpResponseRedirect(
+        reverse("manage_product", kwargs={'partner_slug': partner.slug, 'product_slug': product.slug}))
 
 
 def upload_additional_image(request, partner_slug, product_slug):
@@ -437,8 +513,7 @@ def upload_additional_image(request, partner_slug, product_slug):
             image = form.save(commit=False)
             image.partner = partner
             image.save()
-            image.migrate()
-            product.image_gallery.add(image)
+            product.attached_images.add(image)
             product.save()
             # redirect to a new URL:
             return HttpResponseRedirect(
@@ -462,8 +537,8 @@ def manage_image_upload_endpoint(request, partner_slug, product_slug):
         with request.FILES['file'] as file:  # There should only be one file
             print(file)
             clean_name = str(file)
-            image = ProductImage.objects.create(image=file)
-            product.image_gallery.add(image)
+            image = Image.objects.create(image_src=file)
+            product.attached_images.add(image)
             product.save()
             return HttpResponse(status=200)
 
@@ -474,12 +549,13 @@ def remove_image(request, partner_slug, product_slug, image_id):
     partner = get_partner_or_401(request, partner_slug)
     product = get_object_or_404(Product, slug=product_slug)
     try:
-        image = get_object_or_404(ProductImage, id=image_id)
-        if product.main_image == image:
-            product.main_image = None
+        image = get_object_or_404(Image, id=image_id)
+        if product.primary_image == image:
+            product.primary_image = None
+            product.attached_images.remove(image)
             product.save()
         else:
-            product.image_gallery.remove(image)
+            product.attached_images.remove(image)
     except Exception as e:
         print(e)
     return HttpResponseRedirect(

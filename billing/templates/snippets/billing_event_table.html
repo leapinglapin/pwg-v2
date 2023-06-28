@@ -1,0 +1,62 @@
+<table class="table">
+    <thead>
+    <tr>
+        <th scope="col">ID</th>
+        <th scope="col">Timestamp</th>
+        <th scope="col">Type</th>
+        <th scope="col">User</th>
+        <th scope="col">Email</th>
+
+        <th scope="col">Description</th>
+
+        <th scope="col">Subtotal</th>
+        <th scope="col">Processing fee</th>
+        <th scope="col">Platform fee</th>
+        <th scope="col">Final Total</th>
+
+    </tr>
+    </thead>
+    {% for event in events %}
+        <tr>
+            <td>{{ event.id }}</td>
+            <td>{{ event.timestamp }}</td>
+            <td>{{ event.type_longform }}</td>
+            <td>
+                {% if event.user %}
+                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=event.user.id %}">
+                        {{ event.user }}
+                    </a>
+                {% endif %}
+            </td>
+
+            <td>{{ event.email_at_time_of_event }}</td>
+
+            <td>
+                {% if event.type == "IC" %}
+                    {# Getting list of packs increases page load #}
+                    {% for pack in event.linked_to_packs.all %}
+                        <a href="{% url 'view_pack_manage' campaign_id=pack.campaign.id partner_slug=partner.slug pack_id=pack.id %}">
+                            {{ pack.name }}
+                        </a>
+                    {% endfor %}
+                {% elif event.type == "CC" %}
+                    {% if event.cart %}
+                        <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=event.cart.id %}">
+                            Order {{ event.cart.id }}
+                        </a>
+                    {% else %}
+                        Order missing cart ID
+                    {% endif %}
+                {% endif %}
+                {% if event.comments %}
+                    <i>{{ event.comments }}</i>
+                {% endif %}
+            </td>
+            <td>{% if event.subtotal %}{{ event.subtotal }}{% endif %}</td>
+            <td>{% if event.processing_fee %}{{ event.processing_fee }}{% endif %}</td>
+            <td>{% if event.platform_fee %}{{ event.platform_fee }}{% endif %}</td>
+            <td>{% if event.final_total %}{{ event.final_total }}{% endif %}</td>
+        </tr>
+    {% endfor %}
+
+</table>

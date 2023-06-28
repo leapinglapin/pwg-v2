@@ -10,15 +10,17 @@
         <a class="btn btn-success" href="{% url 'downloads_v2' refresh=1 %}" id="refresh"> Check for new items </a>
     </h2>
     <p>
+        By downloading files you agree to our <a href="/terms/">Terms of Service</a>.
+        Violations (including sharing files without permissions) may result in account access being revoked.
+    </p>
+    <p>
         This page is not yet complete, but serves as a preview of upcoming changes to our download page.
     </p>
 {% endblock %}
 
 {% block alternate %}
     <p class="p-6">
-        Your downloads will appear here. If you are a new patron and expecting downloads to be available here,
-        please ensure the email for your account is the same as your email and wait up to 4 hours for us to
-        retrieve information from patreon.
+        Your downloads will appear here.
     </p>
 {% endblock %}
 

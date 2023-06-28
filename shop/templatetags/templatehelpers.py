@@ -10,7 +10,7 @@ from django.db.models import Sum, Q
 
 from checkout.models import Cart
 from digitalitems.models import DigitalItem
-from shop.models import Item, InventoryItem, MadeToOrder
+from shop.models import Item, InventoryItem, MadeToOrder, CustomChargeItem
 
 register = template.Library()
 
@@ -34,11 +34,11 @@ def site_url(context, cart=None):
         protocol = "http://"
     if cart and hasattr(cart, 'site'):
         url = cart.site.domain
-        print("using cart's domain")
+        # print("using cart's domain")
     else:
         if context and hasattr(context, 'request') and hasattr(context.request, 'site'):
             url = context.request.site.domain
-            print("using requests's domain")
+            # print("using requests's domain")
     return protocol + url
 
 
@@ -139,8 +139,7 @@ def customer_for_transaction(transaction):
             return cart.owner, cart.email
         except AttributeError:
             return None, None
-    elif transaction.type == transaction.PLATFORM_CHARGE:
-        return None, None
+    return None, None
 
 
 @register.filter()
@@ -152,7 +151,7 @@ def get_discount_price(item, user):
 # for more information about what this filter does
 @register.filter()
 def items_set_with_custom_manager(product):
-    return product.item_set(manager='filtered_items').all()
+    return product.item_set(manager='filtered_items').all().not_instance_of(CustomChargeItem)
 
 
 @register.filter()

@@ -24,4 +24,8 @@ class InventoryReportLine(models.Model):
     timestamp = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return "{} in {} at {}".format(self.barcode, self.location, self.timestamp)
+        if self.location:
+
+            return "{} in {}, scanned at {}".format(self.barcode, self.location, self.timestamp)
+        else:
+            return "{}, scanned at {}".format(self.barcode, self.timestamp)
