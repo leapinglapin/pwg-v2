@@ -13,13 +13,13 @@ node {
             sh 'yarn install'
             sh 'yarn build'
             sh 'cp -r ./tailwind/static/css/ /output/css/'
-            sh 'cp -r ./opencgat/static/js/cgt/ /output/js/'
+            sh 'cp -r ./opencgat/static/js/ /output/js/'
         }
         djangoImage = docker.build("registry.digitalocean.com/cgt/opencgat:${env.BUILD_ID}")
         djangoImage.inside('-v /output/:/output/ -u root'){
-            sh 'mkdir -p opencgat/static/js/cgt/'
+            sh 'mkdir -p opencgat/static/js/'
             sh 'cp -r /output/css/ opencgat/static/css/'
-            sh 'cp -r /output/js/ opencgat/static/js/cgt/'
+            sh 'cp -r /output/js/ opencgat/static/js/'
         }
     }
     stage('Test') {
