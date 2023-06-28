@@ -80,6 +80,7 @@ apps_to_install = [
     "wagtail.contrib.legacy.richtext",
 
     # add the wagtail CMS
+    'wagtail_non_admin_draftail',
     'wagtail.contrib.forms',
     'wagtail.contrib.redirects',
     'wagtail.embeds',

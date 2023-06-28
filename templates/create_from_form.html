@@ -1,5 +1,5 @@
 {% extends 'container.html' %}
-{% load wagtailadmin_tags %}
+{% load wagtail_non_admin_draftail_tags %}
 {% load static %}
 
 {% block title %}Create or Edit{% endblock %}
@@ -16,88 +16,10 @@
 
     <link rel="stylesheet" type="text/css" href="{% static 'admin/css/widgets.css' %}"/>
 
-    <script>
-        (function (document, window) {
-            window.wagtailConfig = window.wagtailConfig || {};
-            wagtailConfig.ADMIN_API = {
-                PAGES: '{% url "wagtailadmin_api:pages:listing" %}',
-                DOCUMENTS: '{% url "wagtailadmin_api:documents:listing" %}',
-                IMAGES: '{% url "wagtailadmin_api:images:listing" %}',
-                {# // Use this to add an extra query string on all API requests. #}
-                {# // Example value: '&order=-id' #}
-                EXTRA_CHILDREN_PARAMETERS: '',
-            };
+    {% include "wagtail_non_admin_draftail/draftail_media.html" %}
 
-            {% locales as locales %}
-            wagtailConfig.I18N_ENABLED = false;
-            wagtailConfig.LOCALES = {{ locales|safe }};
-
-            wagtailConfig.STRINGS = {% js_translation_strings %};
-
-            wagtailConfig.ADMIN_URLS = {
-                PAGES: '{% url "wagtailadmin_explore_root" %}'
-            };
-        })(document, window);
-    </script>
-    <link rel="stylesheet" href="{% versioned_static 'wagtailadmin/css/normalize.css' %}"/>
-
-    {{ form.media }}
-    <div data-sprite></div>
-    <script>
-        function loadIconSprite() {
-            var spriteURL = '{% url "wagtailadmin_sprite" %}';
-            var revisionKey = 'wagtail:spriteRevision';
-            var dataKey = 'wagtail:spriteData';
-            var isLocalStorage = 'localStorage' in window && typeof window.localStorage !== 'undefined';
-
-            var insertIt = function (data) {
-                var spriteContainer = document.body.querySelector('[data-sprite]');
-                spriteContainer.innerHTML = data;
-            }
-
-            var insert = function (data) {
-                if (document.body) {
-                    insertIt(data)
-                } else {
-                    document.addEventListener('DOMContentLoaded', insertIt.bind(null, data));
-                }
-            }
-
-            if (isLocalStorage && localStorage.getItem(revisionKey) === spriteURL) {
-                var data = localStorage.getItem(dataKey);
-                if (data) {
-                    insert(data);
-                    return true;
-                }
-            }
-
-            try {
-                var request = new XMLHttpRequest();
-                request.open('GET', spriteURL, true);
-                request.onload = function () {
-                    if (request.status >= 200 && request.status < 400) {
-                        data = request.responseText;
-                        insert(data);
-                        if (isLocalStorage) {
-                            localStorage.setItem(dataKey, data);
-                            localStorage.setItem(revisionKey, spriteURL);
-                        }
-                    }
-                }
-                request.send();
-            } catch (e) {
-                console.error(e);
-            }
-        }
-
-        loadIconSprite();
-    </script>
-
-    <script type="text/javascript" src="/static/wagtailadmin/js/draftail.js"></script>
-    <script src="{% versioned_static 'wagtailadmin/js/core.js' %}"></script>
-    <script src="{% versioned_static 'wagtailadmin/js/vendor.js' %}"></script>
-    <script src="{% versioned_static 'wagtailadmin/js/wagtailadmin.js' %}"></script>
-    <script src="{% versioned_static 'wagtailadmin/js/vendor.js' %}"></script>
+    {{ form.media.js }}
+    {{ form.media.css }}
 
 
 {% endblock %}

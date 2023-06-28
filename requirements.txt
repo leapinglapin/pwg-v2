@@ -23,7 +23,8 @@ split-settings
 psycopg2-binary
 
 squareup
-wagtail==5.0.1
+wagtail==5.0.2
+wagtail_non_admin_draftail==0.18.2
 whitenoise
 
 django-treewidget
@@ -58,3 +59,4 @@ python-dateutil
 setuptools
 six
 b2sdk
+
