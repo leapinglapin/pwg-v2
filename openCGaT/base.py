@@ -47,6 +47,7 @@ apps_to_install = [
     'userinfo',
     'user_list',
     'financial',
+    'tailwind',  # Tailwind is not a real app, it's just where our CSS is stored
     # ^ Our Apps
     # v Dependencies
     'django_extensions',
@@ -124,7 +125,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'openCGaT.urls'
-
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',

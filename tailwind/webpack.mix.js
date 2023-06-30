@@ -6,8 +6,8 @@ const output =
 console.log(output);
 
 mix.setPublicPath(output);
-mix.postCss("src/stylesheets/default.css", "default.css", [
+mix.postCss("src/stylesheets/opencgat.css", "opencgat.css", [
     require("postcss-import"),
-    require("tailwindcss")("src/configs/default.js"),
+    require("tailwindcss")("src/configs/opencgat.js"),
     require("autoprefixer"),
 ]);
