@@ -148,7 +148,7 @@ class CartMiddleware:
         else:
             # Anonymous user with no cart - instantiate a new cart
             # instance.  No need to save yet.
-            cart = manager.create(site=site)
+            cart = Cart(site=site)
 
         # Cache cart instance for the duration of this request
         request._cart_cache = cart
