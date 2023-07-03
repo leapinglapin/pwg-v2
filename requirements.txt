@@ -60,3 +60,4 @@ setuptools
 six
 b2sdk
 
+sentry-sdk
