@@ -19,7 +19,6 @@ STRIPE_ENDPOINT_SECRET = os.getenv("STRIPE_ENDPOINT_SECRET")
 
 stripe.api_key = STRIPE_SECRET_KEY
 
-
 PAYPAL_ENDPOINT = os.getenv("PAYPAL_ENDPOINT")
 PAYPAL_CLIENT_ID = os.getenv("PAYPAL_CLIENT_ID")
 PAYPAL_SECRET = os.getenv("PAYPAL_SECRET")
@@ -42,3 +41,5 @@ CORS_ALLOWED_ORIGINS = ["https://3.18.12.63",
                         "https://54.241.31.99",
                         "https://54.241.31.102",
                         "https://54.241.34.107"]
+
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin-allow-popups'  # Allow paypal pop-up
