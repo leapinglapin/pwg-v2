@@ -1,6 +1,6 @@
 rfc3339
 gunicorn
-Django == 4.2.2
+Django == 4.2.3
 django-allauth
 django-b2
 django-debug-toolbar
@@ -23,7 +23,8 @@ split-settings
 psycopg2-binary
 
 squareup
-wagtail==5.0.1
+wagtail==5.0.2
+wagtail_non_admin_draftail==0.18.2
 whitenoise
 
 django-treewidget
@@ -58,3 +59,5 @@ python-dateutil
 setuptools
 six
 b2sdk
+
+sentry-sdk

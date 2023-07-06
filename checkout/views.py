@@ -27,7 +27,9 @@ from .serializers import CartSerializer, get_pos_props
 
 @csrf_exempt
 def json_cart(request):
-    response = CartSerializer(request.cart).data
+    response = {}
+    if request.cart.id is not None:
+        response = CartSerializer(request.cart).data
     response['buttonItems'] = []
     if request.method == 'POST':
         data = json.loads(request.body)

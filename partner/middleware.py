@@ -18,7 +18,6 @@ def get_site(request):
     try:
         if request:
             site = _get_site_by_request(request)
-            print(site)
             if site:
                 return site
     except Exception:

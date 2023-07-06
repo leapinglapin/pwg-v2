@@ -50,6 +50,7 @@ module.exports = {
     ],
     corePlugins: {
         preflight: false,
+        visibility: false, // Temporary fix for navbar
     },
     important: true,
 };

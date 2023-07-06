@@ -47,6 +47,7 @@ apps_to_install = [
     'userinfo',
     'user_list',
     'financial',
+    'tailwind',  # Tailwind is not a real app, it's just where our CSS is stored
     # ^ Our Apps
     # v Dependencies
     'django_extensions',
@@ -80,6 +81,7 @@ apps_to_install = [
     "wagtail.contrib.legacy.richtext",
 
     # add the wagtail CMS
+    'wagtail_non_admin_draftail',
     'wagtail.contrib.forms',
     'wagtail.contrib.redirects',
     'wagtail.embeds',
@@ -123,7 +125,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'openCGaT.urls'
-
 
 AUTHENTICATION_BACKENDS = (
     'django.contrib.auth.backends.ModelBackend',

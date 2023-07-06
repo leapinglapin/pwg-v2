@@ -49,6 +49,7 @@ node {
                 sh './manage.py migrate'
             }
         }
-        sh 'doctl apps create-deployment doappcluserid'
+        //Pushing the latest container should auto-trigger a deploy.
+        //sh "doctl apps create-deployment ${params.doappcluserid}"
     }
 }

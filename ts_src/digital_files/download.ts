@@ -14,7 +14,7 @@ let $body: HTMLElement;
 export function loadDownloads() {    // HTML elements
     $body = document.body;
     if (window.Worker) {
-        let download_worker = new Worker("/static/js/cgt/download_engine.js");
+        let download_worker = new Worker("/static/js/download_engine.js");
 
         download_worker.onmessage = function (e) {
             let message = <returnMessage>e.data;

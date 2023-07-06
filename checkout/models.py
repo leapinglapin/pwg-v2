@@ -672,7 +672,10 @@ class Cart(RepresentationMixin, models.Model):
     @property
     def num_items(self):
         """Return number of items"""
-        return sum(line.quantity for line in self.lines.all())
+        if self.id is not None:
+            return sum(line.quantity for line in self.lines.all())
+        else:
+            return 0
 
     @property
     def time_before_submit(self):

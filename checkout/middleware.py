@@ -152,7 +152,6 @@ class CartMiddleware:
 
         # Cache cart instance for the duration of this request
         request._cart_cache = cart
-
         if num_carts_merged > 0:
             messages.add_message(request, messages.WARNING,
                                  _("We have merged a cart from a previous session. Its contents "

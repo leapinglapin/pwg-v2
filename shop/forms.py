@@ -129,7 +129,7 @@ class FiltersForm(forms.Form):
 
     publisher = forms.ModelChoiceField(Publisher.objects.all().order_by('name'), required=False)
     game = forms.ModelChoiceField(Game.objects.all().order_by('name'), required=False)
-    faction = forms.ModelChoiceField(Faction.objects.all().order_by('name'), required=False)
+    faction = forms.ModelChoiceField(Faction.objects.all().order_by('name').prefetch_related('game'), required=False)
 
     def __init__(self, *args, **kwargs):
         manage = kwargs.pop('manage')
@@ -141,9 +141,11 @@ class FiltersForm(forms.Form):
         game = self.data.get('game')
         if publisher:
             self.fields['game'].queryset = Game.objects.filter(publisher=publisher).order_by('name')
-            self.fields['faction'].queryset = Faction.objects.filter(game__publisher=publisher).order_by('name')
+            self.fields['faction'].queryset = Faction.objects.filter(game__publisher=publisher).order_by(
+                'name').prefetch_related('game')
         if game:
-            self.fields['faction'].queryset = Faction.objects.filter(game=game).order_by('name')
+            self.fields['faction'].queryset = Faction.objects.filter(game=game).order_by(
+                'name').values().prefetch_related('game')
 
         if manage:
             self.fields['out_of_stock_only'] = forms.BooleanField(required=False)
