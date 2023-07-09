@@ -145,7 +145,7 @@ class FiltersForm(forms.Form):
                 'name').prefetch_related('game')
         if game:
             self.fields['faction'].queryset = Faction.objects.filter(game=game).order_by(
-                'name').values().prefetch_related('game')
+                'name').prefetch_related('game')
 
         if manage:
             self.fields['out_of_stock_only'] = forms.BooleanField(required=False)
