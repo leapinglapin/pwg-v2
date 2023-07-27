@@ -11,3 +11,10 @@ mix.postCss("src/stylesheets/opencgat.css", "opencgat.css", [
     require("tailwindcss")("src/configs/opencgat.js"),
     require("autoprefixer"),
 ]);
+
+
+mix.postCss("src/stylesheets/valhalla.css", "valhalla.css", [
+    require("postcss-import"),
+    require("tailwindcss")("src/configs/valhalla.js"),
+    require("autoprefixer"),
+]);
