@@ -40,10 +40,7 @@ class Partner(models.Model):
     css_filename = models.CharField(max_length=64, validators=[RegexValidator(regex=r'^[a-zA-Z0-9\.]+\.css$')],
                                     null=True, blank=True)
 
-    favicon_path = models.CharField(max_length=20, null=True, blank=True)
-
-    partner_logo = models.ImageField(blank=True, null=True)
-    partner_banner = models.ImageField(blank=True, null=True)
+    static_prefix = models.CharField(max_length=20, default='default')
 
     default_download_all = models.BooleanField(default=True)
 

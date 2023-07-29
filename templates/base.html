@@ -41,8 +41,9 @@
     {% endblock %}
 
     <!-- Purged TailwindCSS styles -->
-    {% if site.partner.css_filename %}
-        <link rel="stylesheet" href="/static/css/{{ site.partner.css_filename }}">
+    {% if site.partner %}
+        <!-- {{ site.partner }} CSS Applied -->
+        <link href="{% static 'css/'|add:site.partner.static_prefix|add:'.css' %}" rel="stylesheet">
     {% else %}
         <link href="{% static 'css/opencgat.css' %}" rel="stylesheet">
     {% endif %}
@@ -109,10 +110,11 @@
 <header class="align-self-stretch sticky top-0 z-20">
     <nav class="navbar navbar-expand-xl min-h-16">
         <a class="navbar-brand p-0" href="/">
-            {% if site.partner.partner_logo %}
-                <img class="inline h-12" src="{{ site.partner.partner_logo.url }}" alt="logo"/>
+            {% if site.partner %}
+                <img class="inline h-12" src="{% static 'images/'|add:site.partner.static_prefix|add:'.png' %}"
+                     alt="logo"/>
             {% else %}
-                <img class="inline h-12" src="{% static 'images/Logo Die Green Cropped.png' %}" alt="logo"/>
+                <img class="inline h-12" src="{% static 'images/default.png' %}" alt="logo"/>
             {% endif %}
         </a>
         <button class="navbar-toggler navbar-dark" type="button" data-toggle="collapse"
