@@ -37,8 +37,6 @@ class Partner(models.Model):
     in_store_tax_rate = models.FloatField(default=.055, help_text="Percent in decimal form( ex .055)")
 
     site = models.OneToOneField(Site, on_delete=models.SET_NULL, blank=True, null=True, related_name='partner')
-    css_filename = models.CharField(max_length=64, validators=[RegexValidator(regex=r'^[a-zA-Z0-9\.]+\.css$')],
-                                    null=True, blank=True)
 
     static_prefix = models.CharField(max_length=20, default='default')
 
