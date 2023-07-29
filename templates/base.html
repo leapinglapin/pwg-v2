@@ -8,8 +8,8 @@
     <meta name="description" content="">
     <meta name="author" content="{% if site %}{{ site.name }}{% else %}Comics Games and Things{% endif %}">
 
-    {% if site.partner and site.partner.favicon_path %}
-        {% include "snippets/favicons.html" with favicon_path=site.partner.favicon_path %}
+    {% if site.partner and site.partner.static_prefix %}
+        {% include "snippets/favicons.html" with favicon_path=site.partner.static_prefix %}
     {% else %}
         {% include "snippets/favicons.html" with favicon_path="default" %}
     {% endif %}
