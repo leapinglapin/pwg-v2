@@ -62,7 +62,6 @@ const AddToCartButton: React.FunctionComponent<IAddProps> = (
             });
         };
 
-        let order_label = "Add to Cart";
         let color = [
             "bg-primary-600",
             "hover:bg-primary-700",
@@ -72,9 +71,9 @@ const AddToCartButton: React.FunctionComponent<IAddProps> = (
         if (props.type != "DigitalItem") {
             //InventoryItem or MTO item
             if (props.is_preorder) {
-                order_label = "Preorder";
+                //"Preorder";
             } else if (props.type == "MadeToOrder") {
-                order_label = "Made to order";
+                //"Made to order";
                 color = [
                     "bg-yellow-600",
                     "hover:bg-yellow-700",
@@ -84,11 +83,16 @@ const AddToCartButton: React.FunctionComponent<IAddProps> = (
 
             if (item.inventory <= 0) { //Use state in case inventory changes
                 if (props.is_preorder) {
-                    order_label = "Preorder";
+                    //"Preorder";
                 } else if (props.backorders_enabled) {
-                    order_label = "Backorder";
+                    //"Backorder";
+                    color = [
+                    "bg-yellow-600",
+                    "hover:bg-yellow-700",
+                    "focus:ring-yellow-500",
+                ];
                 } else {
-                    order_label = "Sold out";
+                    //"Sold out";
                 }
                 //TODO: Ensure max value is respected when quantity is increased
             }
