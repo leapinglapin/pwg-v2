@@ -279,8 +279,8 @@ def product_details(request, product_slug, partner_slug=None):
         purchases = POLine.objects.filter(barcode=product.barcode).exclude(barcode=None).order_by("-po__date")
         context["sales"] = sales
         context["x_sold"] = \
-            sales.filter(cart__status__in=[Cart.SUBMITTED, Cart.PAID, Cart.COMPLETED]).aggregate(sum=Sum("quantity"))[
-                'sum']
+            sales.filter(cart__status__in=[Cart.SUBMITTED, Cart.PAID, Cart.COMPLETED]).exclude(
+                cancelled=True).aggregate(sum=Sum("quantity"))['sum']
         context["po_lines"] = purchases
         context["x_purchased"] = purchases.aggregate(sum=Sum("received_quantity"))['sum']
 
