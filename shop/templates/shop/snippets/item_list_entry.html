@@ -34,49 +34,18 @@
                         {% for itemIcon in all_items %}
                             {% if itemIcon|is_inventory_item %}
                                 <i title="Physical item" class="fas fa-box {% if itemIcon == item %}text-gray-600
-
-
-
-
-
-
-
-
-
-
-
-                                    {% else %}{% if all_items|length > filtered_items|length %} order-first" title="This item has additional item types available. Enter the product page to view.{% endif %}{% endif %}"></i>
+                                    {% else %}
+                                    {% if all_items|length > filtered_items|length %} order-first" title="This item has additional item types available. Enter the product page to view.{% endif %}{% endif %}"></i>
                             {% endif %}
                             {% if itemIcon|is_download_item %}
                                 <i title="Digital item" class="fas fa-download {% if itemIcon == item %}text-gray-600
-
-
-
-
-
-
-
-
-
-
-
-                                    {% else %}{% if all_items|length > filtered_items|length %} order-first" title="This item has additional item types available. Enter the product page to view.{% endif %}{% endif %}"></i>
+                                    {% else %}
+                                    {% if all_items|length > filtered_items|length %} order-first" title="This item has additional item types available. Enter the product page to view.{% endif %}{% endif %}"></i>
                             {% endif %}
                             {% if itemIcon|is_mto_item %}
-                                <i title="Made-to-order item"
-                                   class="fas fa-hammer {% if itemIcon == item %}text-gray-600
-
-
-
-
-
-
-
-
-
-
-
-                                       {% else %}{% if all_items|length > filtered_items|length %} order-first" title="This item has additional item types available. Enter the product page to view.{% endif %}{% endif %}"></i>
+                                <i title="Made-to-order item" class="fas fa-hammer {% if itemIcon == item %}text-gray-600
+                                    {% else %}
+                                    {% if all_items|length > filtered_items|length %} order-first" title="This item has additional item types available. Enter the product page to view.{% endif %}{% endif %}"></i>
                             {% endif %}
                         {% endfor %}
                     </span>
@@ -147,10 +116,9 @@
                 <!-- <i class="fas fa-hammer"></i> -->
                 {% include 'shop/snippets/discounted_price.html' %}
             {% endif %}
-            {% if not manage %}
-                {% if not item|purchased:user %}
-                    {% if item.external_url %}
-                        <a href="{{ item.external_url }}">
+            {% if not item|purchased:user %}
+                {% if item.external_url %}
+                    <a href="{{ item.external_url }}">
                         <h1 class="bg-primary-600 hover:bg-primary-700 focus:ring-primary-500 inline-flex items-center
                                                     justify-center px-6 py-3 border border-transparent text-xl
                                                     font-medium rounded-md shadow-sm text-white focus:outline-none focus:ring-2
@@ -159,42 +127,22 @@
                             <i class="fas fa-arrow-up-right-from-square"></i>
 
                         </h1>
-                        </a>
-                    {% else %}
-                        {% react_render component="AddToCartButton" props=item %}
-                    {% endif %}
+                    </a>
                 {% else %}
-                    {% if item|is_download_item %}
-                        <a href="product/{{ product.slug }}/"
-                           class="unstyled no-underline hover:no-underline text-black hover:text-black">
-                            <h1 class="inline-flex items-center justify-center px-6 py-3 border
+                    {% react_render component="AddToCartButton" props=item %}
+                {% endif %}
+            {% else %}
+                {% if item|is_download_item %}
+                    <a href="product/{{ product.slug }}/"
+                       class="unstyled no-underline hover:no-underline text-black hover:text-black">
+                        <h1 class="inline-flex items-center justify-center px-6 py-3 border
                             border-transparent text-xl font-medium rounded-md shadow-sm text-white focus:outline-none
                             focus:ring-2 focus:ring-offset-2 w-full bg-green-600 hover:bg-green-700
                                 focus:ring-primary-500">
-                                Download
-                            </h1>
-                        </a>
-                    {% endif %}
+                            Download
+                        </h1>
+                    </a>
                 {% endif %}
-            {% else %}
-                <a href="product/{{ product.slug }}/"
-                   class="unstyled no-underline hover:no-underline text-black hover:text-black">
-                    <h1 class="inline-flex items-center justify-center px-6 py-3 border
-                            border-transparent text-xl font-medium rounded-md shadow-sm text-white focus:outline-none
-                            focus:ring-2 focus:ring-offset-2 w-full bg-green-600 hover:bg-green-700
-                                focus:ring-green-500">
-                        Edit
-                    </h1>
-                </a>
-                <div class="text-sm">
-                    {{ item.button_status.0 }}
-                    <br>
-                    {% if item.button_status.1 %}
-                        Button Enabled
-                    {% else %}
-                        Button Disabled
-                    {% endif %}
-                </div>
             {% endif %}
         </div>
     </div>
