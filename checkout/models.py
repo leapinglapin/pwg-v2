@@ -1182,8 +1182,8 @@ class CheckoutLine(models.Model):
                 backorder_or_preorder = "backorder"
 
             if self.cart.is_submitted:
-                if self.fulfilled:
-                    if self.fulfilled_in_cart != self.cart:
+                if self.fulfilled or self.cart.status == Cart.COMPLETED:
+                    if self.fulfilled_in_cart and self.fulfilled_in_cart != self.cart:
                         return "Fulfilled with order {}".format(self.fulfilled_in_cart.id)
                     return "Fulfilled"
                 if self.cancelled or self.cart.status == Cart.CANCELLED:
