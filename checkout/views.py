@@ -482,9 +482,7 @@ def partner_order_mark_completed(request, partner_slug, cart_id):
         past_cart = Cart.submitted.get(id=cart_id)
         if past_cart.pickup_partner.id != partner.id:
             return HttpResponse(status=403)
-        if past_cart.status == "Paid":
-            past_cart.status = Cart.COMPLETED
-            past_cart.save()
+        past_cart.mark_completed()
         return HttpResponseRedirect(
             reverse('partner_order_details', kwargs={'partner_slug': partner_slug, 'cart_id': cart_id}))
     except Cart.DoesNotExist:

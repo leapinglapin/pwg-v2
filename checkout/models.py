@@ -423,6 +423,13 @@ class Cart(RepresentationMixin, models.Model):
                 pt.cancel()
             self.send_cancelled_email()
 
+    def mark_completed(self):
+        if self.status == Cart.PAID:
+            self.status = Cart.COMPLETED
+            for line in self.lines.all():
+                line.complete()
+            self.save()
+
     def pay_amount(self, amount, cash=False, timestamp=None):
         success = False
         if self.is_paid or self.status == self.CANCELLED:
@@ -1182,14 +1189,17 @@ class CheckoutLine(models.Model):
                 backorder_or_preorder = "backorder"
 
             if self.cart.is_submitted:
+                if self.cancelled or self.cart.status == Cart.CANCELLED:
+                    return "Cancelled"
                 if self.fulfilled or self.cart.status == Cart.COMPLETED:
                     if self.fulfilled_in_cart and self.fulfilled_in_cart != self.cart:
                         return "Fulfilled with order {}".format(self.fulfilled_in_cart.id)
                     return "Fulfilled"
-                if self.cancelled or self.cart.status == Cart.CANCELLED:
-                    return "Cancelled"
                 if self.ready or self.cart.ready_for_pickup:
-                    return "Ready for pickup"
+                    delivery_method = "for pickup"
+                    if self.cart.delivery_method == Cart.SHIP_ALL:
+                        delivery_method = "to ship"
+                    return "Ready {}".format(delivery_method)
                 if self.cart.status != Cart.COMPLETED and self.back_or_pre_order:
                     return backorder_or_preorder
                 # Return the cart status if we don't have any line specific overrides
