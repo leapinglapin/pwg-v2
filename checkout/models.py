@@ -175,6 +175,8 @@ class Cart(RepresentationMixin, models.Model):
 
     discount_code_message = models.TextField(max_length=True, null=True)
 
+    invoice_been_printed = models.BooleanField(default=False)
+
     def __str__(self):
         return "{} cart (id: {}, owner: {}, items: {}, total:{})".format(
             self.status, self.id, self.owner, self.num_items, self.final_total)

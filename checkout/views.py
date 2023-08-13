@@ -454,8 +454,9 @@ def partner_order_printout(request, partner_slug, cart_id):
     partner = get_partner_or_401(request, partner_slug=partner_slug)
     try:
         past_cart = Cart.submitted.get(id=cart_id)
-        print(past_cart)
-        context = {'past_cart': past_cart, 'partner': partner, }
+        past_cart.invoice_been_printed = True
+        past_cart.save()
+        context = {'past_cart': past_cart, 'partner': partner}
         return TemplateResponse(request, "checkout/partner_order_printout.html", context=context)
     except Cart.DoesNotExist:
         return HttpResponse(status=404)

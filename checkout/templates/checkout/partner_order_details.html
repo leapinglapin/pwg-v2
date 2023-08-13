@@ -98,6 +98,9 @@
            onclick="print_slip()">
             Print Packing Slip
         </a>
+        {% if past_cart.invoice_been_printed %}
+            <i class="fa fa-solid fa-check"></i>
+        {% endif %}
         <script>
             function print_slip() {
                 var printWindow = window.open("{% url 'partner_order_printout' partner_slug=partner.slug cart_id=past_cart.id %}",

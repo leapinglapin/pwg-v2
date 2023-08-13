@@ -2,6 +2,7 @@
 
 {% block header_columns %}
     <th scope="col">ID</th>
+    <th scope="col">P?</th>
     <th scope="col">User</th>
     <th scope="col">Date</th>
     <th scope="col">Items</th>
@@ -15,6 +16,11 @@
         <a href="{% url 'partner_order_details' partner_slug=partner.slug cart_id=entry.id %}">
             {{ entry.id }}
         </a>
+    </td>
+    <td>
+        {% if entry.invoice_been_printed %}
+            <i class="fa fa-solid fa-check"></i>
+        {% endif %}
     </td>
     <td>
         {% if entry.owner %}
