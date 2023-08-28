@@ -23,6 +23,7 @@ node_modules/
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+yarn.lock
 
 # Ignore local dev tools version configurations
 # since they can contain computer specific information
