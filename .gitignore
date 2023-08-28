@@ -24,6 +24,7 @@ node_modules/
 !.yarn/versions
 .pnp.*
 yarn.lock
+yarn-error.log
 
 # Ignore local dev tools version configurations
 # since they can contain computer specific information
