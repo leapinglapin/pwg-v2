@@ -1,9 +1,12 @@
+__pycache__
 venv
 *.pyc
 /static
 .env
 .envdev
 .envprod
+__pychache__
+*.sqlite3
 
 .idea/
 .vscode/
@@ -23,6 +26,8 @@ node_modules/
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
+yarn.lock
+yarn-error.log
 
 # Ignore local dev tools version configurations
 # since they can contain computer specific information
@@ -30,3 +35,5 @@ node_modules/
 .nvmrc
 m1_mac_env_setup.sh
 
+#Ignore text reports
+/reports/*
