@@ -75,7 +75,7 @@ def import_records():
             product.msrp = msrp
             product.save()
 
-            item, created = InventoryItem.objects.get_or_create(partner=Partner.objects.get(name__icontains="CG&T"),
+            item, created = InventoryItem.objects.get_or_create(partner=Partner.objects.get(name__icontains="PWG"),
                                                                 product=product, defaults={
                     'price': msrp * .8, 'default_price': msrp * .8
                 })

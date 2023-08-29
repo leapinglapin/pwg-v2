@@ -29,7 +29,7 @@ class Command(BaseCommand):
         log(f, "{} was collected in tax ".format(tax))
         log(f, "{} was collected total".format(total))
 
-        partner = Partner.objects.get(name__icontains="CG&T")
+        partner = Partner.objects.get(name__icontains="PWG")
         po_lines = POLine.objects.filter(po__partner=partner)
 
         valhalla_collected = Money("0", 'USD')

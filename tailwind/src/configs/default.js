@@ -1,18 +1,18 @@
 const defaultTheme = require("tailwindcss/defaultTheme");
 
 const primary = {
-    "50": "#f1f5f1",
-    "100": "#dbf0e3",
-    "200": "#ade7bf",
-    "300": "#5dc969",
-    "400": "#2caf5a",
-    "500": "#1e9634",
-    "600": "#1a8025",
-    "700": "#196320",
-    "800": "#13441a",
-    "900": "#0d2a16",
+    "50": "#FAF6FE",
+    "100": "#F1E7FB",
+    "200": "#E3D0F7",
+    "300": "#DBC2F5",
+    "400": "#CFAFF2",
+    "500": "#C49CEF",
+    "600": "#B684EB",
+    "700": "#A96EE7",
+    "800": "#9A54E3", // 800 is the darkest we currently use
+    "900": "#9A54E3",
+    //https://coolors.co/gradient-maker/ffffff-faf6fe-f1e7fb-e3d0f7-dbc2f5-cfaff2-c49cef-b684eb-a96ee7-9a54e3?position=0,5,10,20,30,40,50,60,70,80&opacity=100,100,100,100,100,100,100,100,100,100&type=linear&rotation=90
 };
-
 module.exports = {
     content: ["../**/*.{html,tsx}"],
     theme: {
@@ -24,7 +24,7 @@ module.exports = {
             colors: {
                 primary: primary,
                 neutral_back: {
-                    DEFAULT: "#E5E7EB",
+                    DEFAULT: "#F5F5F5",
                     mid: "#343A40",
                     dark: "#1C211E",
                 },
@@ -47,10 +47,10 @@ module.exports = {
     plugins: [
         require("@tailwindcss/forms"),
         require("@tailwindcss/typography"),
+        require("@tailwindcss/line-clamp"),
     ],
     corePlugins: {
         preflight: false,
-        visibility: false, // Temporary fix for navbar
     },
     important: true,
 };

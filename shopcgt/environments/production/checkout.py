@@ -1,0 +1,1 @@
+CART_COOKIE_SECURE = True

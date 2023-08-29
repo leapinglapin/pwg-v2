@@ -12,9 +12,9 @@ mix.postCss("src/stylesheets/default.css", "default.css", [
     require("autoprefixer"),
 ]);
 
-
-mix.postCss("src/stylesheets/valhalla.css", "valhalla.css", [
+mix.postCss("src/stylesheets/makerscult.css", "makerscult.css", [
     require("postcss-import"),
-    require("tailwindcss")("src/configs/valhalla.js"),
+    require("tailwindcss")("src/configs/makerscult.js"),
     require("autoprefixer"),
 ]);
+

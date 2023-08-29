@@ -1,18 +1,25 @@
 from django import forms
-from django.forms import widgets
+from djmoney.forms import MoneyField
 from treewidget.fields import TreeModelMultipleChoiceField
 
 from digitalitems.models import *
+from django.forms import widgets
+
 from shop.models import Category
+from subscriptions.models import SubscriptionPack
 
 
 class AddEditDigital(forms.ModelForm):
+    in_packs = forms.ModelMultipleChoiceField(SubscriptionPack.objects.none())
+
     class Meta:
         model = DigitalItem
         fields = ['derived_from_all', 'derived_from_any',
                   'featured',
                   'download_date', 'price', 'default_price',
                   'pay_what_you_want',
+                  'tag_obj_files',
+                  'tag_zip_files',
                   'enable_download_all']
         widgets = {
             'download_date': widgets.SelectDateWidget(years=range(2010, 2100)),
@@ -22,6 +29,14 @@ class AddEditDigital(forms.ModelForm):
         partner = kwargs.pop('partner')
 
         super(AddEditDigital, self).__init__(*args, **kwargs)
+        self.fields['in_packs'].required = False
+        self.fields['in_packs'].queryset = SubscriptionPack.objects.filter(campaign__partner=partner) \
+            .order_by('-pledges_to')
+        packs = SubscriptionPack.objects.filter(contents=self.instance).exclude(contents__isnull=True)
+        self.fields['in_packs'].initial = packs
+        print(self.fields['in_packs'].initial)
+        self.fields['tag_obj_files'].initial = partner.default_obj_tagging
+        self.fields['tag_zip_files'].initial = partner.default_zip_tagging
         self.fields['enable_download_all'].initial = partner.default_download_all
 
     def save(self, *args, **kwargs):
@@ -31,6 +46,7 @@ class AddEditDigital(forms.ModelForm):
         saved_instance.partner = partner
         saved_instance.product = product
         saved_instance.save()
+        saved_instance.subscription_packs.set(self.cleaned_data['in_packs'])
         saved_instance.save()
         return saved_instance
 

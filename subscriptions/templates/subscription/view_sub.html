@@ -1,0 +1,15 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %}{{ product.name }}{% endblock %}
+{% block extrastyle %}
+
+{% endblock %}
+{% block content %}
+    <div>
+        <h2>{{ campaign.name }}</h2>
+        {% include 'subscription/snippets/campaign_info.html' %}
+        {% include 'subscription/snippets/discount_info.html' %}
+        {% include 'subscription/snippets/packs_in_campaign.html' %}
+    </div>
+{% endblock %}

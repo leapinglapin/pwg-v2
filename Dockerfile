@@ -2,6 +2,8 @@ FROM python:3.10-buster
 
 
 ADD requirements.txt /app/requirements.txt
+ADD patreonlink/patreon-python /app/patreon-python
+
 
 RUN set -ex \
     && python -m venv /env \
@@ -19,4 +21,4 @@ ENV PATH /env/bin:$PATH
 
 EXPOSE 80
 
-CMD ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "3", "openCGaT.wsgi:application"]
+CMD ["gunicorn", "--bind", "0.0.0.0:80", "--workers", "3", "shopcgt.wsgi:application"]

@@ -20,7 +20,7 @@ class Command(BaseCommand):
                 "{}{}".format(url, suffix),
                 auth=(private_key, "x"),
                 headers={
-                    'User-Agent': "CG&T",
+                    'User-Agent': "PWG",
                 }
             )
             print(response)

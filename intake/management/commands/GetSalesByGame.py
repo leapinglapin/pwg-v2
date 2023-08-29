@@ -18,7 +18,7 @@ class Command(BaseCommand):
         year = 2022
         f = open("reports/earnings by game.txt", "a")
         inv_report_lines = InventoryReport.objects.first().report_lines.all()
-        partner = Partner.objects.get(name__icontains="CG&T")
+        partner = Partner.objects.get(name__icontains="PWG")
 
         log(f, "End of year Earnings by Game report")
         po_lines = POLine.objects.filter(po__partner=partner, po__date__year=year)

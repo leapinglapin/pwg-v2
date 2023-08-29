@@ -1,0 +1,5 @@
+
+
+[submodule "patreon-python"]
+	path = patreon-python
+	url = https://github.com/Patreon/patreon-python.git

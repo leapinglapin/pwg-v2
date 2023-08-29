@@ -23,6 +23,9 @@ class Downloads(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='downloads')
     date = models.DateTimeField()
     partner_paid = models.BooleanField(default=False)
+    added_from_subscription_pack = models.ForeignKey('subscriptions.SubscriptionPack',
+                                                     on_delete=models.SET_NULL, null=True, related_name="downloads_granted")
+    added_from_digital_pack = models.ForeignKey('packs.DigitalPack', on_delete=models.SET_NULL, null=True)
     added_from_cart = models.ForeignKey('checkout.Cart', on_delete=models.PROTECT, null=True)
 
     timestamp_added = models.DateTimeField(
@@ -53,6 +56,11 @@ class DigitalItem(Item):
     pay_what_you_want = models.BooleanField(default=False,
                                             help_text="This makes price the minimum the user has to pay, "
                                                       "and default price the amount the form defaults to")
+
+    tag_zip_files = models.BooleanField(default=True, help_text="May cause issues for users with larger zips")
+    tag_obj_files = models.BooleanField(default=True,
+                                        help_text="Only uncompressed obj files, "
+                                                  "may cause issues with really large obj files")
     enable_download_all = models.BooleanField(default=True, help_text="Show the Download All Button")
 
     max_per_cart = 1
@@ -161,7 +169,7 @@ class DigitalItem(Item):
                                            This email could be a mistake and should be manually checked
                                            """.format(cart.owner, self, cart.id),
                                from_email=None,
-                               to=["nsh@comicsgamesandthings.com"])
+                               to=["admin@printedwargames.com"])
             msg.content_subtype = 'html'
             msg.send(fail_silently=True)
 

@@ -4,8 +4,8 @@
     body {
         font-family: system-ui, -apple-system,
             /* Firefox supports this but not yet `system-ui` */ "Segoe UI",
-        Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
-        "Segoe UI Emoji";
+            Roboto, Helvetica, Arial, sans-serif, "Apple Color Emoji",
+            "Segoe UI Emoji";
         color: #212529;
     }
 
@@ -62,17 +62,6 @@
         grid-template-columns: repeat(2, auto);
 
     }
-
-    @layer utilities {
-        .visible {
-            visibility: visible;
-        }
-
-        .invisible {
-            visibility: hidden;
-        }
-    }
-
 }
 
 input[type="checkbox"] {

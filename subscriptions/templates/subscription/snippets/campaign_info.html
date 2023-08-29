@@ -1,0 +1,13 @@
+{% load wagtailcore_tags %}
+{{ campaign.description|richtext }}
+<div class="row">
+    {% if campaign.patreon_campaign %}
+        <div class="col">
+            <a href="https://www.patreon.com/bePatron?u={{ campaign.patreon_campaign.be_patron_button_number }}"
+               data-patreon-widget-type="become-patron-button">Become a patron</a>
+            <script async src="https://c6.patreon.com/becomePatronButton.bundle.js"></script>
+        </div>
+
+
+    {% endif %}
+</div>

@@ -1,0 +1,27 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: shopcgt
+  labels:
+    app: shopcgt
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: shopcgt
+  template:
+    metadata:
+      labels:
+        app: shopcgt
+    spec:
+      containers:
+        - image: registry.digitalocean.com/cgt/shopcgt:latest
+          name: shopcgt
+          envFrom:
+          - secretRef:
+              name: shopcgt-secret
+          - configMapRef:
+              name: shopcgt-config
+          ports:
+            - containerPort: 8000
+              name: gunicorn

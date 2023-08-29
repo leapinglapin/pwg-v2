@@ -27,13 +27,15 @@ def partner_billing_statements(request, partner_slug):
 def partner_billing_statement_details(request, partner_slug, statement_id):
     partner = get_partner_or_401(request, partner_slug=partner_slug)
     statement = get_object_or_404(BillingStatement, id=statement_id)
-    events = statement.events.select_related('user')
+    events = statement.events.select_related('user').prefetch_related(
+        'linked_to_packs__campaign')
     context = {
         'partner': partner,
         'statement': statement,
         'summary': statement.get_summary(),
         'non_ic_events': events.exclude(type=BillingEvent.INTEGRATION_CHARGE),
         'ic_events': events.filter(type=BillingEvent.INTEGRATION_CHARGE),
+        'pack_summary': statement.integration_charges_by_pack(),
     }
     return render(request, "partner/billing/statement_details.html", context)
 

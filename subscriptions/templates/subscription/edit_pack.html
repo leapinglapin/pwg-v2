@@ -1,0 +1,27 @@
+{% extends 'create_from_form.html' %}
+{% load static %}
+
+{% block title %}Creating or editing Pack{% endblock %}
+{% block info_before %}
+    {% if pack %}
+        {% if pack.primary_image %}
+            <img class='img-thumbnail' src="{{ pack.primary_image.image_url }}"
+                 alt="{{ pack.primary_image.alt_text }}"
+                 style="max-width:200px; max-height: 200px;"
+                 onclick="document.getElementById('displayed_image').src=this.src"/>
+            <a type="button" class="btn btn-danger"
+               href="{% url 'remove_pack_image' partner_slug=partner.slug pack_id=pack.id image_id=pack.primary_image.id campaign_id=pack.campaign.id %}">
+                Remove Image
+            </a>
+        {% endif %}
+
+        <a type="button" class="btn btn-secondary"
+           href="{% url 'upload_pack_image' partner_slug=partner.slug pack_id=pack.id campaign_id=pack.campaign.id %}">
+            Set Image
+        </a>
+    {% endif %}
+
+{% endblock %}
+// The form will go here
+{% block info_after %}
+{% endblock %}

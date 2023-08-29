@@ -26,12 +26,14 @@ squareup
 wagtail==5.0.2
 wagtail_non_admin_draftail==0.18.2
 whitenoise
+humanize
 
 django-treewidget
 django-mathfilters
 
 
 stripe
+taxjar
 django-address
 django-mptt
 

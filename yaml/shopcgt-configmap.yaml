@@ -1,0 +1,9 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shopcgt-config
+data:
+  WEB_CONCURRENCY: "2"
+  DJANGO_SETTINGS_MODULE: "shopcgt.settings"
+  DJANGO_ENV: "production"
+  NODE_ENV: "production"

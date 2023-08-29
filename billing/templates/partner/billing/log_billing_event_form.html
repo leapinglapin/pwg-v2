@@ -1,0 +1,18 @@
+{% extends 'container.html' %}
+{% block title %} {{ title }}{% endblock %}
+{% block content %}
+    {% block info_before %}
+        <h1>{{ title }} </h1>
+
+        <h2>Balance: {{ balance }} </h2>
+    {% endblock %}
+    <form action="." method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        {% include 'snippets/form_body.html' %}
+        <input type="submit" value="Save" class="btn btn-success">
+        {% block extra_submit_buttons %}
+        {% endblock %}
+    </form>
+    {% block info_after %}
+    {% endblock %}
+{% endblock %}

@@ -1,0 +1,177 @@
+{% extends 'container.html' %}
+{% load static %}
+
+{% block title %} Manage {{ pack.name }}{% endblock %}
+{% block extrastyle %}
+    <style>
+        .card-img {
+            object-fit: cover;
+            height: 20vh;
+        }
+    </style>
+
+{% endblock %}
+
+{% block content %}
+    <div class="col-12 col-md-9 col-xl-10 py-md-3 pl-md-5">
+        <h1>
+            {{ pack.name }}
+            <button pack_id="{{ pack.id }}"
+                    date="{% now "YmdHi" %}"
+                    class="Download_Pack_Button btn btn-secondary"
+                    id="download_pack_{{ pack.id }}">
+                Download All
+            </button>
+        </h1>
+        <a href="{% url 'edit_pack' campaign_id=pack.campaign.id partner_slug=partner.slug pack_id=pack.id %}">
+            <h3>edit {{ pack.name }}</h3>
+        </a>
+        {% if pack.primary_image %}
+            <img class='img-thumbnail' src="{{ pack.primary_image.image_url }}"
+                 alt="{{ pack.primary_image.alt_text }}"
+                 style="max-width:200px; max-height: 200px;"
+                 onclick="document.getElementById('displayed_image').src=this.src"/>
+            <a type="button" class="btn btn-danger"
+               href="{% url 'remove_pack_image' partner_slug=partner.slug pack_id=pack.id image_id=pack.primary_image.id campaign_id=pack.campaign.id %}">
+                Remove Image
+            </a>
+        {% else %}
+            <a type="button" class="btn btn-secondary"
+               href="{% url 'upload_pack_image' partner_slug=partner.slug pack_id=pack.id campaign_id=pack.campaign.id %}">
+                Set Image
+            </a>
+        {% endif %}
+
+        {% include 'subscription/snippets/pack_info.html' %}
+        <h2>How it appears when Purchased:</h2>
+        {% with purchased=True partner=None %}
+            {% include 'digital/snippets/downloads_list.html' %}
+        {% endwith %}
+        <h2>How it appears when Unpurchased:</h2>
+        {% for di in purchases %}
+            <div class="row mb-3">
+                <div class="col">
+                    <div class="card">
+                        <div class="row no-gutters">
+                            {% if di.product.should_be_visible or not di.product.page_is_draft %}
+                                {% if di.product.visible %}
+                                    <a href="{% url 'product_detail' product_slug=di.product.slug %}">
+                                {% endif %}
+                            <div class="col-md-4">
+                                <img class='card-img' src="{{ di.product.primary_image.image_url }}"
+                                     alt="{{ di.product.primary_image.alt_text }}">
+                            </div>
+                            <div class="col-md-8">
+                                <div class="card-body">
+                                    <h2>{{ di.product.name }}
+                                    </h2>
+                                </div>
+                            </div>
+                            {% if di.product.visible %}
+                                </a>
+                            {% endif %}
+
+                            {% else %}
+                                Not yet revealed!
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+        <h2>{{ users.count }} Patrons have access:
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseUserList"
+                    aria-expanded="false" aria-controls="collapseUserList">
+                Expand
+            </button>
+        </h2>
+        <i>This list updates when the pledges script checks their pledges or a user refreshes their downloads</i>
+
+
+        <div class="collapse" id="collapseUserList">
+            <div class="card card-body">
+                {% for user in users %}
+                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=user.id %}">{{ user }},</a>
+                {% endfor %}
+            </div>
+        </div>
+        <br>
+
+        <h3>Emails of above patrons (csv):
+            <button class="btn btn-primary" type="button" data-toggle="collapse" data-target="#collapseEmailList"
+                    aria-expanded="false" aria-controls="collapseEmailList">
+                Expand
+            </button>
+        </h3>
+
+
+        <div class="collapse" id="collapseEmailList">
+            <div class="card card-body">
+                {% for email in emails %}
+                    {{ email.0 }},
+                {% endfor %}
+            </div>
+        </div>
+
+        <h3>Charges:</h3>
+        <table class="table">
+            <thead>
+            <tr>
+                <th scope="col">Statement</th>
+                <th scope="col">Total Charges</th>
+                <th scope="col">
+                    Users
+                    <button class="btn btn-primary" type="button" data-toggle="collapse"
+                            data-target="#collapseTableUserList"
+                            aria-expanded="false" aria-controls="collapseTableUserList">
+                        Expand
+                    </button>
+                </th>
+
+
+            </tr>
+            </thead>
+            {% for statement,events in charges.items %}
+                <tr>
+                    <td>
+                        <a href="{% url 'statement_details' partner_slug=partner.slug statement_id=statement.id %}">
+                            {{ statement }}
+                        </a>
+                    </td>
+                    <td> {{ events.count }} </td>
+
+                    <td>
+                        <div class="collapsed collapse show" id="collapseTableUserList">
+                            {% for event in events|slice:3 %}
+                                {% if event.user %}
+                                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=event.user.id %}">
+                                        {{ event.user.username }},
+                                    </a>
+                                {% else %}
+                                    {{ event.email_at_time_of_event }}
+                                {% endif %}
+                            {% endfor %}
+                            {% if events.count > 3 %} ... {% endif %}
+                        </div>
+
+                        <div class="collapse" id="collapseTableUserList">
+                            {% for event in events %}
+                                {% if event.user %}
+                                    <a href="{% url 'partner_customer_details' partner_slug=partner.slug user_id=event.user.id %}">
+                                        {{ event.user.username }},
+                                    </a>
+                                {% else %}
+                                    {{ event.email_at_time_of_event }},
+                                {% endif %}
+                            {% endfor %}
+                        </div>
+                    </td>
+                </tr>
+            {% endfor %}
+        </table>
+    </div>
+
+{% endblock content %}
+
+
+

@@ -1,11 +1,7 @@
-__pycache__
 venv
 *.pyc
 /static
 .env
-.envdev
-.envprod
-__pychache__
 *.sqlite3
 
 .idea/
@@ -14,11 +10,11 @@ __pychache__
 node_modules/
 
 #Ignore compiled javascript files
-/openCGaT/static/js/
+/shopcgt/static/js/cgt/
 /ts_src/cart/*.js
+/ts_src/cart/*.jsx
 /ts_src/cart/components/*.js
 /ts_src/cart/components/*.jsx
-
 
 #Ignore uploaded files
 /media/**
@@ -30,8 +26,6 @@ node_modules/
 !.yarn/sdks
 !.yarn/versions
 .pnp.*
-yarn.lock
-yarn-error.log
 
 # Ignore local dev tools version configurations
 # since they can contain computer specific information
@@ -40,5 +34,8 @@ yarn-error.log
 m1_mac_env_setup.sh
 /yaml/shopcgt-secrets
 
-#Ignore text reports
+
+# Ignore text reports
 /reports/*
+
+*/migrations/*

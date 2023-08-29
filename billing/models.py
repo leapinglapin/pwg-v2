@@ -8,6 +8,7 @@ from djmoney.models.fields import MoneyField
 from djmoney.money import Money
 
 from partner.models import PartnerTransaction
+from subscriptions.models import SubscriptionPack
 
 
 class PartnerBalance(models.Model):
@@ -74,7 +75,10 @@ class BillingStatement(models.Model):
         summary = {}
 
         # distinct requires order_by
-
+        pack_id_list = self.events.order_by('linked_to_packs').values_list('linked_to_packs',
+                                                                           flat=True).distinct()
+        for pack in SubscriptionPack.objects.filter(id__in=pack_id_list):
+            summary[pack] = self.events.filter(linked_to_packs=pack).prefetch_related('user').order_by('id')
         return summary
 
     def is_past_month(self):
@@ -126,6 +130,7 @@ class BillingEvent(models.Model):
     migrated_from = models.ForeignKey(PartnerTransaction, on_delete=models.SET_NULL, null=True, blank=True,
                                       related_name="migrated_to")
 
+    linked_to_packs = models.ManyToManyField("subscriptions.SubscriptionPack", related_name='billing_events')
     cart = models.ForeignKey("checkout.Cart", on_delete=models.PROTECT, null=True, blank=True,
                              related_name="billing_event")
 

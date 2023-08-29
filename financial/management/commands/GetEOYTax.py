@@ -23,6 +23,9 @@ class Command(BaseCommand):
             total_collected = transactions.filter(type=PartnerTransaction.PURCHASE).aggregate(
                 Sum('transaction_fees'))['transaction_fees__sum']
             log(f, "Sales Fees {}".format(total_collected))
+            total_collected = transactions.filter(type=PartnerTransaction.PLATFORM_CHARGE).aggregate(
+                Sum('transaction_fees'))['transaction_fees__sum']
+            log(f, "Patreon Integration Fees {}".format(total_collected))
             total_collected = transactions.filter(type=PartnerTransaction.PAYMENT).aggregate(
                 Sum('transaction_subtotal'))['transaction_subtotal__sum']
             log(f, "Total Sent {}".format(total_collected))

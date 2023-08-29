@@ -10,7 +10,7 @@ from inventory_report.models import InventoryReport
 from partner.models import Partner
 from shop.models import Product
 
-partner = Partner.objects.get(name__icontains="CG&T")
+partner = Partner.objects.get(name__icontains="PWG")
 
 year = 2022
 

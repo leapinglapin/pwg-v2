@@ -1,0 +1,29 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: shopcgt-ingress
+  annotations:
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    nginx.ingress.kubernetes.io/configuration-snippet: |-
+      proxy_ssl_server_name on;
+      proxy_ssl_name $host;
+spec:
+  tls:
+  - hosts:
+    - k8s.comicsgamesandthings.com
+    - comicsgamesandthings.com
+    - www.comicsgamesandthings.com
+    secretName: shopcgt-tls
+  rules:
+  - host: k8s.comicsgamesandthings.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: shopcgt
+            port:
+              number: 80

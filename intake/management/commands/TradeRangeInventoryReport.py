@@ -19,12 +19,12 @@ class Command(BaseCommand):
                 for di in tr.contains.all():
                     if di.quantity_per_pack == 1:
                         try:
-                            item = InventoryItem.objects.get(partner=Partner.objects.get(name__icontains="CG&T"),
+                            item = InventoryItem.objects.get(partner=Partner.objects.get(name__icontains="PWG"),
                                                              product__barcode=di.dist_barcode)
                             if item.current_inventory == 0:
-                                log(f, "CG&T is out of {}".format(item))
+                                log(f, "PWG is out of {}".format(item))
                         except InventoryItem.DoesNotExist:
-                            log(f, "CG&T does not carry {}".format(item))
+                            log(f, "PWG does not carry {}".format(item))
 
 
 def log(f, string):

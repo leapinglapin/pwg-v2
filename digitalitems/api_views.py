@@ -9,6 +9,7 @@ from django.urls import reverse
 from digitalitems.forms import FiltersForm
 from digitalitems.models import DigitalItem
 from digitalitems.serializers import DownloadableSerializer, DigitalItemSerializer
+from digitalitems.views import refresh_downloads_for_user
 
 
 @verified_email_required
@@ -17,6 +18,10 @@ def account_downloads_v2(request, refresh=0):
     site_partner = None
     initial_data = {'page_size': page_size}
     if request.user.is_authenticated:
+        # First ensure that all purchases are imported
+        if refresh:
+            refresh_downloads_for_user(request.user)
+            return HttpResponseRedirect(reverse('downloads_v2'))
         # Now check all purchases
         downloads = DigitalItem.objects.filter(downloads__in=request.user.downloads.all()).distinct()
         print(downloads)

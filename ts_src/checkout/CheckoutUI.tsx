@@ -61,7 +61,7 @@ const CheckoutUI: React.FunctionComponent = (props): JSX.Element => {
 
             </CheckoutStep>
             <div className={"flex flex-col grow w-full gap-2 lg:gap-4 xl:gap-8"}>
-                <CheckoutStep title={"Login or Guest Checkout"} id={step.LOGIN} current_section={current_section}
+                <CheckoutStep title={"Account Login"} id={step.LOGIN} current_section={current_section}
                               setSection={setSection} summary={loginSummary}>
                     <CheckoutEmailForm setSummary={setLoginSummary}/>
                 </CheckoutStep>
