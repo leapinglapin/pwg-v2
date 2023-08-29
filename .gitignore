@@ -15,6 +15,10 @@ node_modules/
 
 #Ignore compiled javascript files
 /openCGaT/static/js/
+/ts_src/cart/*.js
+/ts_src/cart/components/*.js
+/ts_src/cart/components/*.jsx
+
 
 #Ignore uploaded files
 /media/**
@@ -34,6 +38,7 @@ yarn-error.log
 .python-version
 .nvmrc
 m1_mac_env_setup.sh
+/yaml/shopcgt-secrets
 
 #Ignore text reports
 /reports/*
